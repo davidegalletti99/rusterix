@@ -1,0 +1,14 @@
+[package]
+name = "rusterix"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "rusterix"
+path = "src/lib.rs"
+
+[dependencies]
+num-traits = "0.2"
+
+[dev-dependencies]
+rand = "0.8"
