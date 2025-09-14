@@ -1,17 +1,15 @@
-use std::ops::Index;
+use std::ops::{Index, IndexMut};
 
-use crate::framework::commons::{self, MaskType};
+use crate::framework::commons::{self, Field, MaskType};
 
 
-pub trait SerializeDeserialize {
-    fn serialize(&self) -> Vec<u8>;
-    fn deserialize(data: &[u8]) -> Self where Self: Sized;
-}
 
+/// Represents a fixed length field
 pub struct FixedLength {
-    pub data: Vec<u8>,
+    data: Vec<u8>,
 }
 
+// Implement PartialEq to compare FixedLength instances
 impl PartialEq for FixedLength {
     fn eq(&self, other: &Self) -> bool {
 
@@ -27,22 +25,26 @@ impl PartialEq for FixedLength {
     }
 }
 
-impl Index<u8> for FixedLength {
+impl Index<usize> for FixedLength {
     type Output = u8;
 
-    fn index(&self, index: u8) -> &Self::Output {
-        &self.data[index as usize]
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.data[index]
     }
 }
+impl IndexMut<usize> for FixedLength {
 
-impl FixedLength {
-    pub fn new(length: usize) -> Self {
-        FixedLength { data: vec![0; length] }
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.data[index]
     }
-    pub fn size_bytes(&self) -> usize {
+
+}
+
+impl Field for FixedLength {
+    fn size_bytes(&self) -> usize {
         self.data.len()
     }
-    pub fn data_existing(&self) -> bool {
+    fn data_existing(&self) -> bool {
         for byte in &self.data {
             if *byte != 0 {
                 return true;
@@ -50,8 +52,14 @@ impl FixedLength {
         }
         false
     }
+}
 
-    pub fn set_fixed_value<T>(&mut self, value: T, bit_length: u16, offset_bits: u16, mask: MaskType) 
+impl FixedLength {
+    pub fn new(length: usize) -> Self {
+        FixedLength { data: vec![0; length] }
+    }
+
+    pub fn set_value<T>(&mut self, value: T, bit_length: u16, offset_bits: u16, mask: MaskType) 
         -> Result<(), Box<dyn std::error::Error>>
     where T: Into<MaskType> 
     {
@@ -66,15 +74,9 @@ impl FixedLength {
         let mut buf: MaskType = value.into();
         let mut bitmask: MaskType = mask.clone();
 
-        // left shift until mask indicates byte boundary
-        while !(bitmask & 0x01) == 1 {
-            bitmask >>= 1;
-            buf <<= 1;
-        }
-        // let len = (bit_length / 8) as usize;
-        // let start = (offset_bits / 8) as usize;
-        let involved_bytes = self.size_bytes();
-        for i in (0..=involved_bytes - 1).rev() {
+        let end_byte = ((offset_bits + bit_length + 7) / 8) as usize;
+        let start_byte = (offset_bits / 8) as usize;
+        for i in (start_byte..=end_byte - 1).rev() {
             let d = (buf as u8) ^ self.data[i];
             let dm = d & bitmask as u8;
             self.data[i] ^= dm;
