@@ -27,7 +27,7 @@ impl ExtendedLength {
     fn update_fx(part: &mut FixedLength, value: bool) -> Result<(), Box<dyn std::error::Error>> {
         let byte_length = part.size_bytes();
         let bit_length = byte_length * commons::BYTE_SIZE;
-        part.set_value(value, byte_length as u16, (bit_length - 1) as u16, 0x01)
+        part.set_value(value, byte_length as u16, (bit_length - 1) as u16)
     }
 
     /// Adds a new FixedLength part to the ExtendedLength item
