@@ -59,24 +59,31 @@ impl FixedLength {
         FixedLength { data: vec![0; length] }
     }
 
-    pub fn set_value<T>(&mut self, value: T, bit_length: u16, offset_bits: u16, mask: MaskType) 
+    /// Sets a value into the FixedLength field at the specified bit offset and length,
+    /// using the extraction mask to ensure only relevant bits are modified.
+    /// The extraction_mask is relative to the bit_length bytes 
+    pub fn set_value<T>(&mut self, value: T, bit_length: u16, offset_bits: u16) 
         -> Result<(), Box<dyn std::error::Error>>
     where T: Into<MaskType> 
     {
-            
         let size_bits = self.size_bytes() * commons::BYTE_SIZE;
-        if offset_bits + bit_length > size_bits as u16 {
+        let end_bit = (offset_bits + bit_length) as usize;
+        if end_bit > size_bits {
             let error_message = format!("Value does not fit into FixedLength of size {} bits since {} (offset_bits) + {} (bit_length) > {} (size_bits)", 
                size_bits, offset_bits, bit_length, size_bits);
             return Err(error_message.into());
         }
         
-        let mut buf: MaskType = value.into();
-        let mut bitmask: MaskType = mask.clone();
+        let end_byte = (end_bit + commons::BYTE_SIZE - 1) / commons::BYTE_SIZE;
+        let start_byte = offset_bits as usize / commons::BYTE_SIZE;
+        
+        let correction = (end_byte * commons::BYTE_SIZE - end_bit) as u16;
+        let extraction_mask = commons::make_bitmask(correction, bit_length);
+        
+        let mut buf: MaskType = value.into() << correction;
+        let mut bitmask: MaskType = extraction_mask.clone();
 
-        let end_byte = ((offset_bits + bit_length + 7) / 8) as usize;
-        let start_byte = (offset_bits / 8) as usize;
-        for i in (start_byte..=end_byte - 1).rev() {
+        for i in (start_byte..end_byte).rev() {
             let d = (buf as u8) ^ self.data[i];
             let dm = d & bitmask as u8;
             self.data[i] ^= dm;
