@@ -1,0 +1,32 @@
+<!ENTITY % compoundable_data_types 'fixed_length | extended_length'>
+<!ENTITY % data_types '%compoundable_data_types; | repetitive | compound'>
+
+<!ELEMENT category (item)+>
+<!ATTLIST category
+    id CDATA #REQUIRED
+>
+<!ELEMENT item (%data_types;)>
+<!ATTLIST item
+    id CDATA #REQUIRED
+>
+<!ELEMENT compound (%compoundable_data_types;)+>
+
+<!ELEMENT extended_length (primary_part, secondary_part)>
+<!ELEMENT primary_part (field+)>
+<!ELEMENT secondary_part (field+)>
+
+<!ELEMENT fixed_length (field+)>
+<!ELEMENT repetitive (field+)>
+<!ELEMENT subfield (field+)>
+
+<!ELEMENT field (value)*>
+<!ATTLIST field
+    name CDATA #REQUIRED
+    size CDATA #REQUIRED
+    offset CDATA #IMPLIED 
+>
+<!ELEMENT value EMPTY>
+<!ATTLIST value
+    value CDATA #REQUIRED
+    enumerated CDATA #REQUIRED
+>

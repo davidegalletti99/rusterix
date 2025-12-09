@@ -41,9 +41,6 @@ impl IndexMut<usize> for FixedLength {
 }
 
 impl Field for FixedLength {
-    fn size_bytes(&self) -> usize {
-        self.data.len()
-    }
     fn data_existing(&self) -> bool {
         for byte in &self.data {
             if *byte != 0 {
@@ -51,6 +48,12 @@ impl Field for FixedLength {
             }
         }
         false
+    }
+}
+
+impl SizedData for FixedLength {
+    fn size_bytes(&self) -> usize {
+        self.data.len()
     }
 }
 

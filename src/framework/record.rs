@@ -1,14 +1,17 @@
 use super::commons::SerializeDeserialize;
 
-type ContainerType = Vec<Box<dyn SerializeDeserialize>>;
+type ContainerType = Vec<Box<dyn Field>>;
+
+/// the field specification type
 type FSPECType = Vec<u8>;
 
-pub struct IFSPEC {
+/// The ASTERIX FSPEC structure
+pub struct Record {
     profile: ContainerType,
     fspec: FSPECType
 }
 
-impl IFSPEC {
+impl Record {
     pub fn calculate_fspec(&self) -> () {
 
     }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE category SYSTEM "rusterix.dtd">
+<category id="048">
+    <item id="000">
+        <fixed_length>
+            <field name="test" size="8" />
+        </fixed_length>
+    </item>
+</category>

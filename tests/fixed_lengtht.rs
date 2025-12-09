@@ -31,7 +31,6 @@ fn set_value_test(value_to_set: MaskType, bit_length: u16, offset_bits: u16, tes
     assert_eq!(test_value, expected_value,
         "Data mismatch from byte {} to {}: expected {:X}, got {:X}",
         start_idx, end_idx - 1, expected_value, test_value);
-    
 }
 
 fn set_multiple_values_test(length_step: usize, test: &mut FixedLength) {
