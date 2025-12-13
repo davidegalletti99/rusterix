@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use crate::framework::commons::{self, Field, MaskType};
+use crate::framework::commons::{self, SizedData, Field, MaskType};
 
 
 

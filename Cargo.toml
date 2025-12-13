@@ -14,7 +14,9 @@ num-traits = "0.2"
 rand = "0.8"
 
 [build-dependencies]
-quick-xml = "0.31"
+# quick-xml = "0.31"
 serde = { version = "1", features = ["derive"] }
 serde_derive = "1"
-serde_xml_rs = "0.6"
+serde-xml-rs = "0.6"
+quote = "1.0"
+proc-macro2 = "1.0"

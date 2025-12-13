@@ -2,7 +2,13 @@
 <!DOCTYPE category SYSTEM "rusterix.dtd">
 <category id="048">
     <item id="000">
-        <fixed_length>
+        <fixed_length length="1">
+            <field name="test" size="8" />
+        </fixed_length>
+    </item>
+    
+    <item id="001">
+        <fixed_length length="1">
             <field name="test" size="8" />
         </fixed_length>
     </item>

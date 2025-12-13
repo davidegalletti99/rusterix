@@ -1,4 +1,9 @@
-use crate::framework::{commons::{self, Field, SizedData}, fixed_length::FixedLength};
+use crate::framework::{commons::{self, Field, SizedData}, data_types::{fixed_length::FixedLength}};
+
+struct ExtendedField {
+    data: FixedLength,
+    field_extension: bool
+}
 
 pub struct ExtendedLength {
     primary: FixedLength,

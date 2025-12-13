@@ -1,4 +1,4 @@
-use rusterix::framework::{commons::{Field, MaskType}, fixed_length::FixedLength};
+use rusterix::framework::{commons::{Field, MaskType, SizedData}, data_types::fixed_length::FixedLength};
 
 
 macro_rules! get_random {

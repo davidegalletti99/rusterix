@@ -1,5 +1,5 @@
 mod utils;
-use rusterix::framework::{commons::{Field, MaskType, BYTE_SIZE}, fixed_length::FixedLength};
+use rusterix::framework::{commons::{BYTE_SIZE, Field, MaskType, SizedData}, data_types::fixed_length::FixedLength};
 
 #[test]
 fn creation_test() {

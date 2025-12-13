@@ -1,5 +1,6 @@
 <!ENTITY % compoundable_data_types 'fixed_length | extended_length'>
 <!ENTITY % data_types '%compoundable_data_types; | repetitive | compound'>
+<!ENTITY % container_attributes 'length CDATA #REQUIRED'>
 
 <!ELEMENT category (item)+>
 <!ATTLIST category
@@ -13,9 +14,12 @@
 
 <!ELEMENT extended_length (primary_part, secondary_part)>
 <!ELEMENT primary_part (field+)>
+<!ATTLIST primary_part %container_attributes;>
 <!ELEMENT secondary_part (field+)>
+<!ATTLIST secondary_part %container_attributes;>
 
 <!ELEMENT fixed_length (field+)>
+<!ATTLIST fixed_length %container_attributes;>
 <!ELEMENT repetitive (field+)>
 <!ELEMENT subfield (field+)>
 
