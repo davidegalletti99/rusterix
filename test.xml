@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE category SYSTEM "rusterix.dtd">
 <category id="048">
-    <item id="000">
-        <fixed_length length="1">
-            <field name="test" size="8" />
-        </fixed_length>
-    </item>
-    
-    <item id="001">
-        <fixed_length length="1">
-            <field name="test" size="8" />
-        </fixed_length>
+    <item id="010" name="Item010">
+        <sequence>
+            <fspec bytes="1"/>
+            <optional condition="fspec:0.0">
+                <primitive name="field_a" bits="8"/>
+            </optional>
+            <optional condition="fspec:0.1">
+                <primitive name="field_b" bits="16"/>
+            </optional>
+            <optional condition="fspec:0.2">
+                <primitive name="field_c" bits="4"/>
+            </optional>
+        </sequence>
     </item>
 </category>

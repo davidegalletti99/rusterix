@@ -4,6 +4,7 @@ use serde::Deserialize;
 pub struct Category {
     #[serde(rename = "id")]
     pub id: u8,
+
     #[serde(rename = "item")]
     pub items: Vec<Item>,
 }
@@ -12,84 +13,77 @@ pub struct Category {
 pub struct Item {
     #[serde(rename = "id")]
     pub id: u8,
+
+    #[serde(rename = "name")]
+    pub name: Option<String>,
+
     #[serde(rename = "$value")]
-    pub layout: ItemLayout,
+    pub body: Sequence,
 }
 
+//
+// ─────────────────────────────
+// Core structural elements
+// ─────────────────────────────
+//
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum ItemLayout {
-    #[serde(rename = "fixed_length")]
-    Fixed(FixedLength),
-    #[serde(rename = "extended_length")]
-    Extended(ExtendedLength),
-    #[serde(rename = "repetitive")]
-    Repetitive(Repetitive),
-    #[serde(rename = "compound")]
-    Compound(Compound),
-}
-#[derive(Debug, Deserialize)]
-pub struct FixedLength {
-    #[serde(rename = "length")]
-    pub length: usize,
-    #[serde(rename = "field")]
-    pub fields: Vec<Field>,
+pub struct Sequence {
+    #[serde(rename = "fspec")]
+    pub fspec: Option<Fspec>,
+
+    #[serde(rename = "$value")]
+    #[serde(default)]
+    pub elements: Vec<Element>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Repetitive {
-    #[serde(rename = "length")]
-    pub length: usize,
-    #[serde(rename = "field")]
-    pub fields: Vec<Field>,
+#[serde(untagged)]
+pub enum Element {
+    Primitive(Primitive),
+    Optional(Optional),
+    Repeat(Repeat),
+    Sequence(Sequence),
+
+    // Ignore text / whitespace nodes
+    Text(String),
 }
 
-#[derive(Debug, Deserialize)]
-pub struct ExtendedLength {
-    #[serde(rename = "primary_part")]
-    pub primary_part: FixedLength,
-    #[serde(rename = "secondary_parts")]
-    pub secondary_parts: FixedLength,
-}
+//
+// ─────────────────────────────
+// Leaf / structural nodes
+// ─────────────────────────────
+//
 
 #[derive(Debug, Deserialize)]
-pub struct Compound {
-    #[serde(rename = "part")]
-    pub parts: Vec<FixedLength>,
-}
+pub struct Primitive {
+    #[serde(rename = "bits")]
+    pub bits: usize,
 
-
-#[derive(Debug, Deserialize)]
-pub struct PrimaryPart {
-    #[serde(rename = "length")]
-    pub length: usize,
-    #[serde(rename = "field")]
-    pub fields: Vec<Field>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct SecondaryPart {
-    #[serde(rename = "length")]
-    pub length: usize,
-    #[serde(rename = "field")]
-    pub fields: Vec<Field>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Field {
     #[serde(rename = "name")]
-    pub name: String,
-    #[serde(rename = "size")]
-    pub size: usize,
-    #[serde(rename = "offset")]
-    pub offset: Option<usize>,
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Value {
-    #[serde(rename = "name")]
-    pub name: String,
-    #[serde(rename = "enumerated")]
-    pub enumerated: u16,
+pub struct Optional {
+    #[serde(rename = "condition")]
+    pub condition: String,
+
+    #[serde(rename = "$value")]
+    pub element: Box<Element>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Repeat {
+    #[serde(rename = "counter")]
+    pub counter: String,
+
+    #[serde(rename = "$value")]
+    pub element: Box<Element>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Fspec {
+    #[serde(rename = "bytes")]
+    pub bytes: usize,
 }

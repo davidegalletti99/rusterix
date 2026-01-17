@@ -1,36 +1,31 @@
-<!ENTITY % compoundable_data_types 'fixed_length | extended_length'>
-<!ENTITY % data_types '%compoundable_data_types; | repetitive | compound'>
-<!ENTITY % container_attributes 'length CDATA #REQUIRED'>
+<!ELEMENT category (item+)>
+<!ATTLIST category id CDATA #REQUIRED>
 
-<!ELEMENT category (item)+>
-<!ATTLIST category
-    id CDATA #REQUIRED
->
-<!ELEMENT item (%data_types;)>
+<!ELEMENT item (sequence)>
 <!ATTLIST item
     id CDATA #REQUIRED
+    name CDATA #IMPLIED
 >
-<!ELEMENT compound (%compoundable_data_types;)+>
 
-<!ELEMENT extended_length (primary_part, secondary_part)>
-<!ELEMENT primary_part (field+)>
-<!ATTLIST primary_part %container_attributes;>
-<!ELEMENT secondary_part (field+)>
-<!ATTLIST secondary_part %container_attributes;>
+<!ELEMENT sequence (fspec?, (primitive | optional | repeat | sequence)*)>
 
-<!ELEMENT fixed_length (field+)>
-<!ATTLIST fixed_length %container_attributes;>
-<!ELEMENT repetitive (field+)>
-<!ELEMENT subfield (field+)>
-
-<!ELEMENT field (value)*>
-<!ATTLIST field
-    name CDATA #REQUIRED
-    size CDATA #REQUIRED
-    offset CDATA #IMPLIED 
+<!ELEMENT fspec EMPTY>
+<!ATTLIST fspec
+    bytes CDATA #REQUIRED
 >
-<!ELEMENT value EMPTY>
-<!ATTLIST value
-    value CDATA #REQUIRED
-    enumerated CDATA #REQUIRED
+
+<!ELEMENT primitive EMPTY>
+<!ATTLIST primitive
+    bits CDATA #REQUIRED
+    name CDATA #IMPLIED
+>
+
+<!ELEMENT optional (primitive | sequence | repeat)>
+<!ATTLIST optional
+    condition CDATA #REQUIRED
+>
+
+<!ELEMENT repeat (primitive | sequence)>
+<!ATTLIST repeat
+    counter CDATA #REQUIRED
 >

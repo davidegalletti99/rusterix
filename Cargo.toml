@@ -9,6 +9,7 @@ path = "src/lib.rs"
 
 [dependencies]
 num-traits = "0.2"
+syn = "2.0.114"
 
 [dev-dependencies]
 rand = "0.8"

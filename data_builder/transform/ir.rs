@@ -1,55 +1,77 @@
-// ir.rs
+/// Intermediate Representation (IR).
+/// ASTERIX-agnostic, purely structural.
 #[derive(Debug)]
 pub struct IR {
-    pub categories: Vec<IRCategory>,
+    pub category: IRCategory,
 }
 
+/// A category (e.g. CAT048).
 #[derive(Debug)]
 pub struct IRCategory {
     pub id: u8,
     pub items: Vec<IRItem>,
 }
 
+/// A data item inside a category.
 #[derive(Debug)]
 pub struct IRItem {
     pub id: u8,
+    pub node: IrNode,
+}
+
+/// A generic IR node.
+/// Everything (including Compound and Repetitive) is expressed recursively.
+#[derive(Debug)]
+pub struct IrNode {
+    pub name: String,
     pub layout: IRLayout,
 }
 
+/// Structural layout description.
+/// No ASTERIX-specific concepts are allowed here.
 #[derive(Debug)]
 pub enum IRLayout {
-    Fixed(IRFixed),
-    Extended(IRExtended),
-    Repetitive(IRRepetitive),
-    Compound(IRCompound),
+    /// A primitive binary field (bit- or byte-aligned).
+    Primitive {
+        bits: usize,
+    },
+
+    /// A sequence of nodes laid out in order.
+    Sequence {
+        elements: Vec<IrNode>,
+    },
+
+    /// An optional node guarded by a condition (e.g. FSPEC bit).
+    Optional {
+        condition: IRCondition,
+        node: Box<IrNode>,
+    },
+
+    /// A repeated node.
+    Repetition {
+        counter: IRCounter,
+        node: Box<IrNode>,
+    },
 }
 
-#[derive(Debug)]
-pub struct IRFixed {
-    pub length: usize,
-    pub fields: Vec<IRField>,
+/// Presence condition for optional nodes.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum IRCondition {
+    /// A specific bit must be set (e.g. FSPEC).
+    BitSet {
+        byte: usize,
+        bit: u8,
+    },
 }
 
+/// Repetition counter description.
 #[derive(Debug)]
-pub struct IRRepetitive {
-    pub length: usize,
-    pub fields: Vec<IRField>,
-}
+pub enum IRCounter {
+    /// Fixed number of repetitions.
+    Fixed(usize),
 
-#[derive(Debug)]
-pub struct IRExtended {
-    pub primary: IRFixed,
-    pub secondary: IRFixed,
-}
-
-#[derive(Debug)]
-pub struct IRCompound {
-    pub parts: Vec<IRFixed>,
-}
-
-#[derive(Debug)]
-pub struct IRField {
-    pub name: String,
-    pub size: usize,
-    pub offset: Option<usize>,
+    /// Number of repetitions read from the stream.
+    FromField {
+        bits: usize,
+    },
 }
