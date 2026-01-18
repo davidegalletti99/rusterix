@@ -1,5 +1,4 @@
 /// Intermediate Representation (IR).
-/// ASTERIX-agnostic, purely structural.
 #[derive(Debug)]
 pub struct IR {
     pub category: IRCategory,
@@ -16,11 +15,11 @@ pub struct IRCategory {
 #[derive(Debug)]
 pub struct IRItem {
     pub id: u8,
+    pub frn: u8,
     pub node: IrNode,
 }
 
 /// A generic IR node.
-/// Everything (including Compound and Repetitive) is expressed recursively.
 #[derive(Debug)]
 pub struct IrNode {
     pub name: String,
@@ -28,10 +27,9 @@ pub struct IrNode {
 }
 
 /// Structural layout description.
-/// No ASTERIX-specific concepts are allowed here.
 #[derive(Debug)]
 pub enum IRLayout {
-    /// A primitive binary field (bit- or byte-aligned).
+    /// A primitive binary field.
     Primitive {
         bits: usize,
     },
@@ -41,7 +39,7 @@ pub enum IRLayout {
         elements: Vec<IrNode>,
     },
 
-    /// An optional node guarded by a condition (e.g. FSPEC bit).
+    /// An optional node guarded by a condition.
     Optional {
         condition: IRCondition,
         node: Box<IrNode>,
@@ -57,7 +55,7 @@ pub enum IRLayout {
 /// Presence condition for optional nodes.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum IRCondition {
-    /// A specific bit must be set (e.g. FSPEC).
+    /// A specific bit must be set.
     BitSet {
         byte: usize,
         bit: u8,

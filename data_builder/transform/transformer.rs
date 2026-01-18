@@ -2,7 +2,6 @@ use crate::data_builder::parse::xml_model::*;
 use crate::data_builder::transform::ir::*;
 
 /// Entry point: XML model → IR
-/// Una singola categoria per IR
 pub fn to_ir(cat: Category) -> IR {
     IR {
         category: to_ir_category(cat),
@@ -19,6 +18,7 @@ fn to_ir_category(cat: Category) -> IRCategory {
 fn to_ir_item(item: Item) -> IRItem {
     IRItem {
         id: item.id,
+        frn: item.frn,  // ← NUOVO: FRN direttamente dall'XML
         node: IrNode {
             name: item
                 .name
@@ -29,14 +29,10 @@ fn to_ir_item(item: Item) -> IRItem {
 }
 
 //
-// ─────────────────────────────
-// Sequence (Scelta B)
-// ─────────────────────────────
+// Sequence
 //
 
 fn to_ir_sequence(seq: Sequence) -> IRLayout {
-    // fspec è strutturale: NON genera IR node
-    // viene ignorato qui (serve solo a livello semantico / condizioni)
     let _fspec = seq.fspec;
 
     IRLayout::Sequence {
@@ -49,9 +45,7 @@ fn to_ir_sequence(seq: Sequence) -> IRLayout {
 }
 
 //
-// ─────────────────────────────
 // Element → IR
-// ─────────────────────────────
 //
 
 fn to_ir_element(el: Element) -> Option<IrNode> {
@@ -67,7 +61,11 @@ fn to_ir_element(el: Element) -> Option<IrNode> {
         }),
 
         Element::Optional(o) => {
-            let condition = parse_condition(&o.condition);
+            let condition = IRCondition::BitSet {
+                byte: (o.frn / 8) as usize,
+                bit: 7 - (o.frn % 8),
+            };
+            
             let node = to_ir_element(*o.element)?;
 
             Some(IrNode {
@@ -90,45 +88,14 @@ fn to_ir_element(el: Element) -> Option<IrNode> {
                     node: Box::new(node),
                 },
             })
-        }
-
-        Element::Text(_) => None, // ignora whitespace / testo
+        },
     }
 }
 
 //
-// ─────────────────────────────
-// Condition / Counter parsing
-// ─────────────────────────────
+// Counter parsing
 //
-
-fn parse_condition(cond: &str) -> IRCondition {
-    // formato richiesto:
-    // fspec:BYTE.BIT   es: fspec:0.3
-    if let Some(rest) = cond.strip_prefix("fspec:") {
-        let mut parts = rest.split('.');
-
-        let byte = parts
-            .next()
-            .and_then(|v| v.parse::<usize>().ok())
-            .expect("Invalid fspec byte index");
-
-        let bit = parts
-            .next()
-            .and_then(|v| v.parse::<u8>().ok())
-            .expect("Invalid fspec bit index");
-
-        IRCondition::BitSet { byte, bit }
-    } else {
-        panic!("Unsupported condition format: {}", cond);
-    }
-}
-
 fn parse_counter(counter: &str) -> IRCounter {
-    // formati supportati:
-    // - fixed:N
-    // - field:BITS
-
     if let Some(rest) = counter.strip_prefix("fixed:") {
         IRCounter::Fixed(
             rest.parse::<usize>()

@@ -5,6 +5,7 @@
 <!ATTLIST item
     id CDATA #REQUIRED
     name CDATA #IMPLIED
+    frn CDATA #REQUIRED
 >
 
 <!ELEMENT sequence (fspec?, (primitive | optional | repeat | sequence)*)>
@@ -22,7 +23,7 @@
 
 <!ELEMENT optional (primitive | sequence | repeat)>
 <!ATTLIST optional
-    condition CDATA #REQUIRED
+    frn CDATA #REQUIRED
 >
 
 <!ELEMENT repeat (primitive | sequence)>

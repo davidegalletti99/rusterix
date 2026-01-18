@@ -14,6 +14,9 @@ pub struct Item {
     #[serde(rename = "id")]
     pub id: u8,
 
+    #[serde(rename = "frn")]
+    pub frn: u8,
+
     #[serde(rename = "name")]
     pub name: Option<String>,
 
@@ -22,9 +25,7 @@ pub struct Item {
 }
 
 //
-// ─────────────────────────────
 // Core structural elements
-// ─────────────────────────────
 //
 
 #[derive(Debug, Deserialize)]
@@ -44,15 +45,10 @@ pub enum Element {
     Optional(Optional),
     Repeat(Repeat),
     Sequence(Sequence),
-
-    // Ignore text / whitespace nodes
-    Text(String),
 }
 
 //
-// ─────────────────────────────
 // Leaf / structural nodes
-// ─────────────────────────────
 //
 
 #[derive(Debug, Deserialize)]
@@ -66,8 +62,8 @@ pub struct Primitive {
 
 #[derive(Debug, Deserialize)]
 pub struct Optional {
-    #[serde(rename = "condition")]
-    pub condition: String,
+    #[serde(rename = "frn")]
+    pub frn: u8,
 
     #[serde(rename = "$value")]
     pub element: Box<Element>,

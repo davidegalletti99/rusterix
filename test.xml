@@ -1,18 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE category SYSTEM "rusterix.dtd">
 <category id="048">
-    <item id="010" name="Item010">
+    <item id="010" frn="0">
+        <sequence>
+            <primitive name="sac" bits="8"/>
+            <primitive name="sic" bits="8"/>
+        </sequence>
+    </item>
+
+    <item id="020" frn="1">
         <sequence>
             <fspec bytes="1"/>
-            <optional condition="fspec:0.0">
-                <primitive name="field_a" bits="8"/>
+            <optional frn="0">
+                <primitive name="typ" bits="3"/>
             </optional>
-            <optional condition="fspec:0.1">
-                <primitive name="field_b" bits="16"/>
+            <optional frn="1">
+                <primitive name="sim" bits="1"/>
             </optional>
-            <optional condition="fspec:0.2">
-                <primitive name="field_c" bits="4"/>
+            <optional frn="2">
+                <primitive name="rdp" bits="1"/>
             </optional>
+        </sequence>
+    </item>
+
+    <item id="050" frn="2">
+        <sequence>
+            <repeat counter="field:8">
+                <primitive name="mode2_code" bits="12"/>
+            </repeat>
         </sequence>
     </item>
 </category>

@@ -1,16 +1,15 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, format_ident};
 
-use crate::data_builder::transform::ir::{IrNode, IRLayout};
+use crate::data_builder::{generate::rust::field_extractor::extract_fields, transform::ir::{IRLayout, IrNode}};
 use super::utils::rust_type_for_bits;
 
-pub fn generate(name: &str, node: &IrNode) -> TokenStream {
-    let ident = format_ident!("{}", name);
+pub fn generate(name: &Ident, node: &IrNode) -> TokenStream {
     let fields = collect_fields(node);
 
     quote! {
         #[derive(Debug, Clone, PartialEq)]
-        pub struct #ident {
+        pub struct #name {
             #(#fields),*
         }
     }

@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf, vec};
 use crate::data_builder::{
-    generate::rust::generate,
+    generate::generate,
     parse::parser::parse_category,
     transform::transformer::to_ir
 };

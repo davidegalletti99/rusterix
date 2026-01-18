@@ -1,11 +1,12 @@
-use crate::data_builder::transform::ir::{IrNode, IRLayout};
+
 
 pub fn rust_type_for_bits(bits: usize) -> &'static str {
     match bits {
         0..=8 => "u8",
         9..=16 => "u16",
         17..=32 => "u32",
-        _ => "u64",
+        33..=64 => "u64",
+        _ => "u128"
     }
 }
 pub fn read_bits(buf: &[u8], bit_offset: usize, bit_size: usize) -> u64 {
