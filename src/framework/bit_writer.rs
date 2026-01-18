@@ -16,7 +16,7 @@ impl<W: Write> BitWriter<W> {
         }
     }
 
-    pub fn write_bits(&mut self, mut value: u64, count: usize) -> io::Result<()> {
+    pub fn write_bits(&mut self, value: u64, count: usize) -> io::Result<()> {
         for i in (0..count).rev() {
             let bit = ((value >> i) & 1) as u8;
             self.buffer = (self.buffer << 1) | bit;
