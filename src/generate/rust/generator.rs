@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
-use crate::data_builder::transform::ir::*;
+use crate::transform::ir::*;
 use super::{struct_gen, decode_gen, encode_gen};
 
 pub fn generate(ir: &IR) -> TokenStream {
@@ -40,7 +40,7 @@ fn generate_items(category: &IRCategory) -> Vec<TokenStream> {
 }
 
 fn generate_record(category: &IRCategory) -> TokenStream {
-    let record_name = format_ident!("Cat{:03}Record", category.id);
+    let record_name = format_ident!("Cat{:03}", category.id);
     
     let fields: Vec<_> = category.items.iter().map(|item| {
         let field_name = format_ident!("item{:03}", item.id);

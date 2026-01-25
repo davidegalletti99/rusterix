@@ -1,13 +1,28 @@
-pub mod framework;
+pub (crate) mod framework;
+pub (crate) mod generate;
+pub (crate) mod parse;
+pub (crate) mod transform;
+pub mod builder;
 
 #[cfg(test)]
 mod tests {
+    use std::{fs, path::PathBuf};
+
+    use crate::builder::{Builder, RustBuilder};
+
+
     #[test]
-    fn it_works() {
-        let test: u128 = 0xFF34_5678_ABCD_EF12_3456_789A_BCDE_F012;
-        let test_8 = test as u8;
-        let expt_8 = (test & 0xFF) as u8;
-        assert_eq!(test_8, expt_8);
-        println!("test_8: {:02X}, expt_8: {:02X}", test_8, expt_8);
+    fn generate() {
+        let builder = RustBuilder {};
+        let data = builder.build("test.xml").expect("Failed to build data");
+
+        let out_path = PathBuf::from("./generated")
+            .join("generated.rs");
+        // Create directory if it doesn't exist
+        if let Some(parent) = out_path.parent() {
+            fs::create_dir_all(parent).expect("Failed to create output directory");
+        }
+
+        fs::write(&out_path, data).expect("Failed to write generated.rs");
     }
 }

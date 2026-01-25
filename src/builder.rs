@@ -1,5 +1,5 @@
-use std::{fs, path::PathBuf, vec};
-use crate::data_builder::{
+use std::{fs, path::PathBuf};
+use crate::{
     generate::generate,
     parse::parser::parse_category,
     transform::transformer::to_ir
@@ -33,4 +33,3 @@ impl Builder for RustBuilder {
         Ok(result.to_string())
     }
 }
-

@@ -1,32 +1,61 @@
-<!ELEMENT category (item+)>
-<!ATTLIST category id CDATA #REQUIRED>
+<!ENTITY % common-attributes "
+    bytes               CDATA #REQUIRED
+">
+<!ENTITY % compoundable-data "(fixed | explicit | extended | repetitive)">
+<!ENTITY % elements "(field | epb-field | enum  | spare)+">
+<!ENTITY % element-attributes "
+    bits                CDATA #REQUIRED
+">
 
-<!ELEMENT item (sequence)>
+<!ELEMENT category      (item+)>
+<!ATTLIST category 
+    id                  CDATA #REQUIRED
+>
+
+<!ELEMENT item          (%compoundable-data; | compound)>
 <!ATTLIST item
-    id CDATA #REQUIRED
-    name CDATA #IMPLIED
-    frn CDATA #REQUIRED
+    id                  CDATA #REQUIRED
+    frn                 CDATA #REQUIRED
+>
+<!-- DataItem's structural tags -->
+<!ELEMENT fixed         %elements;>
+<!ATTLIST fixed         %common-attributes;>
+
+<!ELEMENT explicit      %elements;>
+<!ATTLIST explicit      %common-attributes;>
+
+<!ELEMENT extended      %elements;>
+<!ATTLIST extended      %common-attributes;>
+
+<!ELEMENT repetitive    %elements;>
+<!ATTLIST repetitive    %common-attributes;
+    counter             CDATA #REQUIRED    
 >
 
-<!ELEMENT sequence (fspec?, (primitive | optional | repeat | sequence)*)>
+<!ELEMENT compound      %compoundable-data;>
 
-<!ELEMENT fspec EMPTY>
-<!ATTLIST fspec
-    bytes CDATA #REQUIRED
+<!-- DataItem's field tags -->
+<!ELEMENT field         EMPTY>
+<!ATTLIST field         %element-attributes;
+    name                CDATA #REQUIRED
 >
 
-<!ELEMENT primitive EMPTY>
-<!ATTLIST primitive
-    bits CDATA #REQUIRED
-    name CDATA #IMPLIED
+<!ELEMENT spare         EMPTY>
+<!ATTLIST spare         %element-attributes;>
+
+<!-- The Element Populated Bit -->
+<!ELEMENT epb-field     EMPTY>
+<!ATTLIST epb-field     %element-attributes;
+    name                CDATA #REQUIRED
 >
 
-<!ELEMENT optional (primitive | sequence | repeat)>
-<!ATTLIST optional
-    frn CDATA #REQUIRED
+<!ELEMENT enum          (value)+>
+<!ATTLIST enum          %element-attributes;
+    name                CDATA #REQUIRED
 >
 
-<!ELEMENT repeat (primitive | sequence)>
-<!ATTLIST repeat
-    counter CDATA #REQUIRED
+<!ELEMENT value         EMPTY>
+<!ATTLIST value
+    name                CDATA #REQUIRED
+    value               CDATA #REQUIRED
 >

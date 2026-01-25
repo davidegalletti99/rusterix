@@ -1,5 +1,3 @@
-
-
 pub fn rust_type_for_bits(bits: usize) -> &'static str {
     match bits {
         0..=8 => "u8",

@@ -1,5 +1,7 @@
-use crate::data_builder::parse::xml_model::*;
-use crate::data_builder::transform::ir::*;
+use crate::{
+    parse::xml_model::*, 
+    transform::ir::*
+};
 
 /// Entry point: XML model → IR
 pub fn to_ir(cat: Category) -> IR {
@@ -18,11 +20,9 @@ fn to_ir_category(cat: Category) -> IRCategory {
 fn to_ir_item(item: Item) -> IRItem {
     IRItem {
         id: item.id,
-        frn: item.frn,  // ← NUOVO: FRN direttamente dall'XML
+        frn: item.frn,
         node: IrNode {
-            name: item
-                .name
-                .unwrap_or_else(|| format!("Item{:03}", item.id)),
+            name: format!("Item{:03}", item.id),
             layout: to_ir_sequence(item.body),
         },
     }
@@ -33,39 +33,33 @@ fn to_ir_item(item: Item) -> IRItem {
 //
 
 fn to_ir_sequence(seq: Sequence) -> IRLayout {
-    let _fspec = seq.fspec;
 
     IRLayout::Sequence {
-        elements: seq
-            .elements
-            .into_iter()
-            .filter_map(to_ir_element)
-            .collect(),
+        elements: seq.elements.into_iter().filter_map(to_ir_element).collect(),
     }
 }
-
 //
 // Element → IR
 //
 
-fn to_ir_element(el: Element) -> Option<IrNode> {
+fn to_ir_element(el: SubItemStructure) -> Option<IrNode> {
     match el {
-        Element::Primitive(p) => Some(IrNode {
+        SubItemStructure::Primitive(p) => Some(IrNode {
             name: p.name.unwrap_or_else(|| "value".into()),
             layout: IRLayout::Primitive { bits: p.bits },
         }),
 
-        Element::Sequence(s) => Some(IrNode {
+        SubItemStructure::Sequence(s) => Some(IrNode {
             name: "sequence".into(),
             layout: to_ir_sequence(s),
         }),
 
-        Element::Optional(o) => {
+        SubItemStructure::Optional(o) => {
             let condition = IRCondition::BitSet {
                 byte: (o.frn / 8) as usize,
                 bit: 7 - (o.frn % 8),
             };
-            
+
             let node = to_ir_element(*o.element)?;
 
             Some(IrNode {
@@ -77,7 +71,7 @@ fn to_ir_element(el: Element) -> Option<IrNode> {
             })
         }
 
-        Element::Repeat(r) => {
+        SubItemStructure::Repeat(r) => {
             let counter = parse_counter(&r.counter);
             let node = to_ir_element(*r.element)?;
 
@@ -89,6 +83,15 @@ fn to_ir_element(el: Element) -> Option<IrNode> {
                 },
             })
         },
+        SubItemStructure::Spare(s) => {
+            let bits = s.bits;
+            Some(IrNode { 
+                name: "spare".into(), 
+                layout: IRLayout::Spare {
+                    bits: bits
+                },
+            })
+        }
     }
 }
 

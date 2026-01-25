@@ -1,7 +1,7 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, format_ident};
 
-use crate::data_builder::transform::ir::{IrNode, IRLayout, IRCondition, IRCounter};
+use crate::transform::ir::{IrNode, IRLayout, IRCondition, IRCounter};
 use super::utils::rust_type_for_bits;
 
 // Renamed from generate() to generate_item() for clarity

@@ -1,4 +1,4 @@
-use crate::data_builder::parse::xml_model::{Category};
+use crate::parse::xml_model::{Category};
 
 /// Parses the given XML string into a Category struct.
 /// # Arguments

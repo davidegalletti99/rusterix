@@ -1,7 +1,7 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, format_ident};
 
-use crate::data_builder::transform::ir::{IrNode, IRLayout, IRCondition};
+use crate::transform::ir::{IrNode, IRLayout, IRCondition};
 
 // Renamed from generate() to generate_item() for clarity
 pub fn generate_item(name: &Ident, node: &IrNode) -> TokenStream {
