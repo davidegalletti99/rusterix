@@ -16,51 +16,46 @@ pub struct IRCategory {
 pub struct IRItem {
     pub id: u8,
     pub frn: u8,
-    pub node: IrNode,
+    pub node: IRNode,
 }
 
 /// A generic IR node.
 #[derive(Debug)]
-pub struct IrNode {
-    pub name: String,
+pub struct IRNode {
+    pub bytes: usize,
     pub layout: IRLayout,
 }
 
 /// Structural layout description.
 #[derive(Debug)]
 pub enum IRLayout {
-    /// A primitive binary field.
-    Primitive {
-        bits: usize,
+    Fixed {
+        elements: Vec<IRNode>,
     },
 
-    /// A sequence of nodes laid out in order.
-    Sequence {
-        elements: Vec<IrNode>,
+    Explicit {
+        elements: Vec<IRNode>,
     },
 
-    /// An optional node guarded by a condition.
-    Optional {
-        condition: IRCondition,
-        node: Box<IrNode>,
+    Extended {
+        elements: Vec<IRNode>,
     },
-
-    /// A repeated node.
     Repetition {
         counter: IRCounter,
-        node: Box<IrNode>,
+        elements: Vec<IRNode>,
     },
+    Compound {
+        layout: Box<IRNode>
+    },
+}
+pub enum IRElement {
+    Field{
+        bits: usize,
+        name: String,
+    },
+    Enum(IREnum),
 }
 
-/// Presence condition for optional nodes.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum IRCondition {
-    /// A specific bit must be set.
-    BitSet {
-        byte: usize,
-        bit: u8,
-    },
-}
 
 /// Repetition counter description.
 #[derive(Debug)]

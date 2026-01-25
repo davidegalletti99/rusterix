@@ -7,7 +7,7 @@ pub mod utils;
 
 use proc_macro2::TokenStream;
 
-use crate::data_builder::transform::ir::IR;
+use crate::transform::ir::IR;
 
 pub fn generate(ir: &IR) -> TokenStream {
     generator::generate(ir)

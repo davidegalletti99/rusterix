@@ -1,7 +1,7 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::{quote, format_ident};
 
-use crate::data_builder::{generate::rust::field_extractor::extract_fields, transform::ir::{IRLayout, IrNode}};
+use crate::{generate::rust::field_extractor::extract_fields, transform::ir::{IRLayout, IrNode}};
 use super::utils::rust_type_for_bits;
 
 pub fn generate(name: &Ident, node: &IrNode) -> TokenStream {
@@ -34,6 +34,12 @@ fn collect_fields(node: &IrNode) -> Vec<TokenStream> {
         }
 
         IRLayout::Repetition { node, .. } => {
+            let name = format_ident!("{}", node.name);
+            let ty = type_for_node(node);
+            vec![quote! { pub #name: Vec<#ty> }]
+        }
+
+        IRLayout::Spare { bits } => {
             let name = format_ident!("{}", node.name);
             let ty = type_for_node(node);
             vec![quote! { pub #name: Vec<#ty> }]

@@ -1,4 +1,4 @@
-use crate::data_builder::transform::ir::*;
+use crate::transform::ir::*;
 
 #[derive(Debug)]
 pub struct FlatField {
@@ -47,6 +47,9 @@ fn walk(
             // ASTERIX: repetition NON genera API diretta
             // va trattata separatamente
         }
+        IRLayout::Spare { bits } => {
+
+        }
     }
 }
 
@@ -58,5 +61,6 @@ fn estimate_size(layout: &IRLayout) -> usize {
         }
         IRLayout::Optional { node, .. } => estimate_size(&node.layout),
         IRLayout::Repetition { .. } => 0,
+        IRLayout::Spare { bits } => *bits
     }
 }
