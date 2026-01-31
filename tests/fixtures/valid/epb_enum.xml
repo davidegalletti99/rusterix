@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<category id="1">
+    <item id="10" frn="0">
+        <fixed bytes="1">
+            <epb>
+                <enum name="status" bits="2">
+                    <value name="OK" value="0"/>
+                    <value name="ERROR" value="1"/>
+                </enum>
+            </epb>
+            <spare bits="5"/>
+        </fixed>
+    </item>
+</category>
