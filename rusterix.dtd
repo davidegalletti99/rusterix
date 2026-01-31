@@ -2,7 +2,7 @@
     bytes               CDATA #REQUIRED
 ">
 <!ENTITY % compoundable-data "(fixed | explicit | extended | repetitive)">
-<!ENTITY % elements "(field | epb-field | enum  | spare)+">
+<!ENTITY % elements "(field | epb | enum  | spare)+">
 <!ENTITY % element-attributes "
     bits                CDATA #REQUIRED
 ">
@@ -24,7 +24,7 @@
 <!ELEMENT explicit      %elements;>
 <!ATTLIST explicit      %common-attributes;>
 
-<!ELEMENT extended      %elements;>
+<!ELEMENT extended      (part)+>
 <!ATTLIST extended      %common-attributes;>
 
 <!ELEMENT repetitive    %elements;>
@@ -32,7 +32,12 @@
     counter             CDATA #REQUIRED    
 >
 
-<!ELEMENT compound      %compoundable-data;>
+<!ELEMENT compound      (%compoundable-data;)+>
+
+<!ELEMENT part          %elements;>
+<!ATTLIST part 
+    index               CDATA #REQUIRED
+>
 
 <!-- DataItem's field tags -->
 <!ELEMENT field         EMPTY>
@@ -44,10 +49,7 @@
 <!ATTLIST spare         %element-attributes;>
 
 <!-- The Element Populated Bit -->
-<!ELEMENT epb-field     EMPTY>
-<!ATTLIST epb-field     %element-attributes;
-    name                CDATA #REQUIRED
->
+<!ELEMENT epb           (field | enum)>
 
 <!ELEMENT enum          (value)+>
 <!ATTLIST enum          %element-attributes;
