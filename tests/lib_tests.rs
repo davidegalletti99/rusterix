@@ -275,6 +275,73 @@ fn test_builder_build_file() {
 }
 
 // ============================================================================
+// Expected Output Comparison Tests
+// ============================================================================
+
+#[test]
+fn test_expected_simple_fixed() {
+    let generated = generate_from_fixture("valid", "simple_fixed.xml");
+    let expected = load_expected_output("simple_fixed");
+    assert_normalized_eq(&generated, &expected, "simple_fixed");
+}
+
+#[test]
+fn test_expected_extended_multi_part() {
+    let generated = generate_from_fixture("valid", "extended_multi_part.xml");
+    let expected = load_expected_output("extended_multi_part");
+    assert_normalized_eq(&generated, &expected, "extended_multi_part");
+}
+
+#[test]
+fn test_expected_enum_basic() {
+    let generated = generate_from_fixture("valid", "enum_basic.xml");
+    let expected = load_expected_output("enum_basic");
+    assert_normalized_eq(&generated, &expected, "enum_basic");
+}
+
+#[test]
+fn test_expected_epb_field() {
+    let generated = generate_from_fixture("valid", "epb_field.xml");
+    let expected = load_expected_output("epb_field");
+    assert_normalized_eq(&generated, &expected, "epb_field");
+}
+
+#[test]
+fn test_expected_compound_simple() {
+    let generated = generate_from_fixture("valid", "compound_simple.xml");
+    let expected = load_expected_output("compound_simple");
+    assert_normalized_eq(&generated, &expected, "compound_simple");
+}
+
+#[test]
+fn test_expected_repetitive_basic() {
+    let generated = generate_from_fixture("valid", "repetitive_basic.xml");
+    let expected = load_expected_output("repetitive_basic");
+    assert_normalized_eq(&generated, &expected, "repetitive_basic");
+}
+
+#[test]
+fn test_expected_spare_bits() {
+    let generated = generate_from_fixture("valid", "spare_bits.xml");
+    let expected = load_expected_output("spare_bits");
+    assert_normalized_eq(&generated, &expected, "spare_bits");
+}
+
+#[test]
+fn test_expected_explicit_item() {
+    let generated = generate_from_fixture("valid", "explicit_item.xml");
+    let expected = load_expected_output("explicit_item");
+    assert_normalized_eq(&generated, &expected, "explicit_item");
+}
+
+#[test]
+fn test_expected_multi_item_record() {
+    let generated = generate_from_fixture("valid", "multi_item_record.xml");
+    let expected = load_expected_output("multi_item_record");
+    assert_normalized_eq(&generated, &expected, "multi_item_record");
+}
+
+// ============================================================================
 // Round-trip Tests (if framework runtime is available)
 // ============================================================================
 
