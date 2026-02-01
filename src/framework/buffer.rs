@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+#![allow(unused)]
 use std::io::{Cursor, Read, Write};
 
 pub struct MemoryBuffer {

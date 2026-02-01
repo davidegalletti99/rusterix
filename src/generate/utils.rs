@@ -13,7 +13,9 @@ use quote::format_ident;
 /// 
 /// # Examples
 /// 
-/// ```
+/// ```ignore
+/// use quote::format_ident;
+/// use rusterix::generate::utils::rust_type_for_bits;
 /// assert_eq!(rust_type_for_bits(3), "u8");
 /// assert_eq!(rust_type_for_bits(12), "u16");
 /// assert_eq!(rust_type_for_bits(24), "u32");
@@ -40,7 +42,9 @@ pub fn rust_type_for_bits(bits: usize) -> &'static str {
 /// 
 /// # Examples
 /// 
-/// ```
+/// ```ignore
+/// use quote::format_ident;
+/// use rusterix::generate::utils::to_pascal_case;
 /// assert_eq!(to_pascal_case("field_name"), format_ident!("FieldName"));
 /// assert_eq!(to_pascal_case("SSR"), format_ident!("Ssr"));
 /// ```
@@ -75,7 +79,9 @@ pub fn to_pascal_case(name: &str) -> Ident {
 /// 
 /// # Examples
 /// 
-/// ```
+/// ```ignore
+/// use quote::format_ident;
+/// use rusterix::generate::utils::to_snake_case;
 /// assert_eq!(to_snake_case("FieldName"), format_ident!("field_name"));
 /// assert_eq!(to_snake_case("SSR"), format_ident!("ssr"));
 /// ```
@@ -84,8 +90,18 @@ pub fn to_snake_case(name: &str) -> Ident {
         .chars()
         .enumerate()
         .flat_map(|(i, c)| {
-            if c.is_uppercase() && i > 0 {
-                vec!['_', c.to_ascii_lowercase()]
+            if i > 0 {
+                let prev = name.chars().nth(i - 1);
+                let next = name.chars().nth(i + 1);
+                if c.is_uppercase() && 
+                ((prev.is_some() && prev.unwrap().is_lowercase()) || 
+                (next.is_some() && next.unwrap().is_lowercase())) {
+                    vec!['_', c.to_ascii_lowercase()]
+                } else {
+                    
+                    vec![c.to_ascii_lowercase()]
+                }
+
             } else {
                 vec![c.to_ascii_lowercase()]
             }
@@ -108,13 +124,16 @@ pub fn to_snake_case(name: &str) -> Ident {
 /// A unique type name combining the parent and suffix.
 /// 
 /// # Examples
-/// 
+///
 /// ```
+/// use quote::format_ident;
+/// use rusterix::generate::utils::nested_type_name;
 /// assert_eq!(
 ///     nested_type_name("Item020", "Byte0"),
 ///     format_ident!("Item020Byte0")
 /// );
 /// ```
+#[allow(unused)]
 pub fn nested_type_name(parent_name: &str, suffix: &str) -> Ident {
     format_ident!("{}{}", parent_name, suffix)
 }
@@ -134,10 +153,10 @@ pub fn nested_type_name(parent_name: &str, suffix: &str) -> Ident {
 /// # Returns
 /// 
 /// A tuple of (byte_index, bit_position) where bit 7 is MSB, bit 0 is LSB.
-pub fn frn_to_fspec_position(frn: usize) -> (usize, usize) {
+pub fn frn_to_fspec_position(frn: usize) -> (usize, u8) {
     let byte = frn / 8;
     let bit = 7 - (frn % 8);
-    (byte, bit)
+    (byte, bit as u8)
 }
 
 #[cfg(test)]

@@ -64,8 +64,8 @@ fn to_ir_item_structure(structure: ItemStructure) -> IRLayout {
                     }
                 })
                 .collect();
-            
-            IRLayout::Extended { part_groups }
+            let bytes = ext.bytes;
+            IRLayout::Extended { bytes, part_groups }
         }
         
         ItemStructure::Repetitive(rep) => {
@@ -121,8 +121,8 @@ fn to_ir_compoundable_item(item: CompoundableItem) -> IRLayout {
                     }
                 })
                 .collect();
-            
-            IRLayout::Extended { part_groups }
+            let bytes = ext.bytes;
+            IRLayout::Extended { bytes, part_groups }
         }
         
         CompoundableItem::Repetitive(rep) => {

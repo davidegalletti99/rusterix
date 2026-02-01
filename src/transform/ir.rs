@@ -68,6 +68,9 @@ pub enum IRLayout {
     /// If FX = 0, no more bytes follow
     /// If FX = 1, another byte follows
     Extended {
+        /// Size in bytes (excluding the length byte)
+        bytes: usize,
+
         /// Part groups - each group represents one byte with FX bit
         part_groups: Vec<IRPartGroup>,
     },
@@ -200,12 +203,15 @@ impl IRLayout {
                 
                 assert_eq!(
                     total_bits, expected_bits,
-                    "Bit count mismatch: elements use {} bits but {} bytes = {} bits",
+                    "Bit count mismatch: Fixed element use {} bits but {} bytes = {} bits",
                     total_bits, bytes, expected_bits
                 );
             }
             
-            IRLayout::Extended { part_groups } => {
+            IRLayout::Extended { bytes, part_groups } => {
+                let layout_bytes =  part_groups.len();
+                let declared_bytes = bytes.clone();
+                assert_eq!(declared_bytes, layout_bytes, "Byte count mismatch: Extended element declared {} bytes but defines {} parts = {} bytes", declared_bytes, layout_bytes, layout_bytes);
                 for group in part_groups {
                     let total_bits: usize = group.elements.iter().map(|e| e.bit_size()).sum();
                     let expected_bits = 7;

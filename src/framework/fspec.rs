@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+#![allow(unused)]
 use std::io::{self, Read, Write};
 
 #[derive(Debug, Clone)]
@@ -6,6 +8,9 @@ pub struct Fspec {
 }
 
 impl Fspec {
+    pub fn new() -> Self {
+        Fspec { bytes: vec![] }
+    }
     pub fn read<R: Read>(reader: &mut R) -> io::Result<Self> {
         let mut bytes = Vec::new();
 

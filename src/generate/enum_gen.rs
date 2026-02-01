@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use quote::{quote, format_ident};
+use quote::{quote};
 
 use super::utils::to_pascal_case;
 
@@ -58,6 +58,7 @@ pub fn generate_enum(
     bits: usize,
     values: &[(String, u8)],
 ) -> TokenStream {
+    let _ = bits;
     let enum_name = to_pascal_case(name);
     
     // Generate variants for all defined values
@@ -97,8 +98,8 @@ pub fn generate_enum(
         
         impl TryFrom<u8> for #enum_name {
             type Error = ();
-            
-            fn try_from(value: u8) -> Result<Self, Self::Error> {
+
+            fn try_from(value: u8) -> Result<Self, ()> {
                 match value {
                     #(#try_from_arms,)*
                     _ => Ok(Self::Unknown(value)),
@@ -128,19 +129,19 @@ mod tests {
             ("SSR".to_string(), 2),
             ("COMBINED".to_string(), 3),
         ];
-        
+
         let result = generate_enum("target_type", 2, &values);
         let code = result.to_string();
-        
+
         // Check that enum is generated
         assert!(code.contains("pub enum TargetType"));
-        
-        // Check that variants are present
-        assert!(code.contains("Psr = 1"));
-        assert!(code.contains("Ssr = 2"));
-        assert!(code.contains("Combined = 3"));
-        assert!(code.contains("Unknown(u8)"));
-        
+
+        // Check that variants are present (quote! renders u8 literals with suffix)
+        assert!(code.contains("Psr = 1u8"));
+        assert!(code.contains("Ssr = 2u8"));
+        assert!(code.contains("Combined = 3u8"));
+        assert!(code.contains("Unknown (u8)")); // quote! adds space
+
         // Check that implementations exist
         assert!(code.contains("impl TryFrom < u8 > for TargetType"));
         assert!(code.contains("impl From < TargetType > for u8"));
