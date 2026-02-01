@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+#![allow(unused)]
 use std::io::{self, Read};
 
 #[derive(Debug)]
@@ -33,5 +35,25 @@ impl<R: Read> BitReader<R> {
         }
 
         Ok(value)
+    }
+
+    /// Returns true if the reader is at a byte boundary (no partial byte buffered).
+    pub fn is_byte_aligned(&self) -> bool {
+        self.bits_left == 0
+    }
+}
+
+/// Implement Read for BitReader to allow byte-level operations.
+/// Note: This only works correctly when the reader is at a byte boundary.
+impl<R: Read> Read for BitReader<R> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        // If we have partial bits buffered, we need to handle them
+        // For now, assert byte alignment for simplicity
+        debug_assert!(
+            self.bits_left == 0,
+            "BitReader::read called with {} bits still buffered",
+            self.bits_left
+        );
+        self.reader.read(buf)
     }
 }

@@ -170,13 +170,4 @@ mod tests {
             "test.rs"
         );
     }
-    #[test]
-    fn test_build() {
-        let buidler = RustBuilder::new();
-        let resutl = RustBuilder::build_file(
-            &buidler, 
-            "test/test.xml".into(),
-            "generated".into());
-        assert!(resutl.is_ok())
-    }
 }

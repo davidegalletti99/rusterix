@@ -1,18 +1,12 @@
-/// Integration tests using external XML fixtures.
-
-mod test_helper;
-use test_helper::*;
-
-// ============================================================================
-// Parsing Tests
-// ============================================================================
+mod common;
+use common::*;
 
 #[test]
 fn test_parse_simple_fixed_item() {
     let xml = load_fixture("valid", "simple_fixed.xml");
     let category = rusterix::parse::parser::parse_category(&xml)
         .expect("Failed to parse XML");
-    
+
     assert_eq!(category.id, 1);
     assert_eq!(category.items.len(), 1);
     assert_eq!(category.items[0].id, 10);
@@ -24,7 +18,7 @@ fn test_parse_extended_item() {
     let xml = load_fixture("valid", "extended_multi_part.xml");
     let category = rusterix::parse::parser::parse_category(&xml)
         .expect("Failed to parse XML");
-    
+
     match &category.items[0].data {
         rusterix::parse::xml_model::ItemStructure::Extended(ext) => {
             assert_eq!(ext.bytes, 2);
@@ -39,7 +33,7 @@ fn test_parse_epb_field() {
     let xml = load_fixture("valid", "epb_field.xml");
     let category = rusterix::parse::parser::parse_category(&xml)
         .expect("Failed to parse XML");
-    
+
     match &category.items[0].data {
         rusterix::parse::xml_model::ItemStructure::Fixed(fixed) => {
             match &fixed.elements[0] {
@@ -64,7 +58,7 @@ fn test_parse_enum() {
     let xml = load_fixture("valid", "enum_basic.xml");
     let category = rusterix::parse::parser::parse_category(&xml)
         .expect("Failed to parse XML");
-    
+
     match &category.items[0].data {
         rusterix::parse::xml_model::ItemStructure::Fixed(fixed) => {
             match &fixed.elements[0] {
@@ -94,7 +88,7 @@ fn test_parse_invalid_xml() {
 #[test]
 fn test_transform_to_ir() {
     let ir = build_ir_from_fixture("valid", "simple_fixed.xml");
-    
+
     assert_eq!(ir.category.id, 1);
     assert_eq!(ir.category.items.len(), 1);
     assert_eq!(ir.category.items[0].id, 10);
@@ -120,21 +114,19 @@ fn test_validation_extended_bit_mismatch() {
 #[test]
 fn test_generate_simple_code() {
     let code = generate_from_fixture("valid", "simple_fixed.xml");
-    
+
     assert_code_contains(&code, &[
         "pub struct Cat001Record",
         "pub struct Item010",
         "pub sac",
         "pub sic",
-        "pub fn decode",
-        "pub fn encode",
     ]);
 }
 
 #[test]
 fn test_generate_extended_code() {
     let code = generate_from_fixture("valid", "extended_multi_part.xml");
-    
+
     assert_code_contains(&code, &[
         "pub struct Item020Part0",
         "pub struct Item020Part1",
@@ -146,12 +138,12 @@ fn test_generate_extended_code() {
 #[test]
 fn test_generate_enum_code() {
     let code = generate_from_fixture("valid", "enum_basic.xml");
-    
+
     assert_code_contains(&code, &[
         "pub enum TargetType",
-        "Psr = 1",
-        "Ssr = 2",
-        "Unknown(u8)",
+        "Psr = 1u8",  // quote! renders literals with u8 suffix
+        "Ssr = 2u8",
+        "Unknown (u8)",  // quote! adds space
         "impl TryFrom < u8 > for TargetType",
     ]);
 }
@@ -159,12 +151,12 @@ fn test_generate_enum_code() {
 #[test]
 fn test_generate_epb_code() {
     let code = generate_from_fixture("valid", "epb_field.xml");
-    
+
     // EPB should generate Option<T>
     assert_code_contains(&code, &[
         "pub optional_value : Option",
     ]);
-    
+
     // Should NOT have a separate "name" field
     assert_code_not_contains(&code, &[
         "pub name",
@@ -174,10 +166,10 @@ fn test_generate_epb_code() {
 #[test]
 fn test_generate_compound_code() {
     let code = generate_from_fixture("valid", "compound_simple.xml");
-    
+
     assert_code_contains(&code, &[
-        "Item100_sub0",
-        "Item100_sub1",
+        "Item100Sub0",
+        "Item100Sub1",
         "pub sub0 : Option",
         "pub sub1 : Option",
     ]);
@@ -186,7 +178,7 @@ fn test_generate_compound_code() {
 #[test]
 fn test_generate_repetitive_code() {
     let code = generate_from_fixture("valid", "repetitive_basic.xml");
-    
+
     assert_code_contains(&code, &[
         "Item070Element",
         "pub items : Vec < Item070Element >",
@@ -196,11 +188,11 @@ fn test_generate_repetitive_code() {
 #[test]
 fn test_spare_bits_ignored() {
     let code = generate_from_fixture("valid", "spare_bits.xml");
-    
+
     assert_code_contains(&code, &[
         "pub data",
     ]);
-    
+
     assert_code_not_contains(&code, &[
         "spare",
         "pub spare",
@@ -210,7 +202,7 @@ fn test_spare_bits_ignored() {
 #[test]
 fn test_explicit_item() {
     let code = generate_from_fixture("valid", "explicit_item.xml");
-    
+
     assert_code_contains(&code, &[
         "pub struct Item060",
         "pub altitude",
@@ -221,7 +213,7 @@ fn test_explicit_item() {
 #[test]
 fn test_record_generation() {
     let code = generate_from_fixture("valid", "multi_item_record.xml");
-    
+
     assert_code_contains(&code, &[
         "pub struct Cat048Record",
         "pub item010 : Option < Item010 >",
@@ -239,17 +231,17 @@ fn test_record_generation() {
 #[test]
 fn test_builder_from_fixture() {
     use rusterix::builder::{Builder, RustBuilder};
-    
+
     let temp_path = create_temp_file(
         &load_fixture("valid", "simple_fixed.xml"),
         "xml"
     );
-    
+
     let builder = RustBuilder::new();
     let result = builder.build(temp_path.to_str().unwrap());
-    
+
     cleanup_temp_files();
-    
+
     assert!(result.is_ok());
     let code = result.unwrap();
     assert!(code.contains("Cat001Record"));
@@ -259,29 +251,28 @@ fn test_builder_from_fixture() {
 fn test_builder_build_file() {
     use rusterix::builder::RustBuilder;
     use std::fs;
-    
+
     let xml_content = load_fixture("valid", "simple_fixed.xml");
-    
+
     fs::create_dir_all("target/test_output").unwrap();
     fs::write("target/test_output/test.xml", xml_content).unwrap();
-    
+
     let builder = RustBuilder::new();
     let result = builder.build_file(
         "target/test_output/test.xml",
         "target/test_output/generated"
     );
-    
+
     assert!(result.is_ok());
     let output_path = result.unwrap();
     assert!(output_path.exists());
-    
+
     let generated = fs::read_to_string(&output_path).unwrap();
     assert!(generated.contains("Cat001Record"));
-    
+
     // Cleanup
     fs::remove_dir_all("target/test_output").ok();
 }
-
 
 // ============================================================================
 // Round-trip Tests (if framework runtime is available)

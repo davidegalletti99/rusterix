@@ -1,26 +1,22 @@
+#![allow(dead_code)]
+#![allow(unused)]
 pub mod bit_reader;
 pub mod bit_writer;
 pub mod buffer;
 pub mod error;
 pub mod fspec;
 
-use bit_reader::BitReader;
-use bit_writer::BitWriter;
-use error::DecodeError;
+pub use bit_reader::BitReader;
+pub use bit_writer::BitWriter;
+pub use error::DecodeError;
+pub use fspec::Fspec;
 
-// type aliases for convenience
-use std::io::Write as IoWrite;
-use std::io::Read as IoRead;
-
+/// Trait for encoding ASTERIX data structures to a bit stream.
 pub trait Encode {
-    fn encode(
-        writer: &mut BitWriter<impl IoWrite>,
-        fspec: &mut fspec::Fspec,
-    ) -> Result<(), DecodeError>;
+    fn encode<W: std::io::Write>(&self, writer: &mut BitWriter<W>) -> Result<(), DecodeError>;
 }
+
+/// Trait for decoding ASTERIX data structures from a bit stream.
 pub trait Decode: Sized {
-    fn decode(
-        reader: &mut BitReader<impl IoRead>,
-        fspec: &fspec::Fspec,
-    ) -> Result<Self, DecodeError>;
+    fn decode<R: std::io::Read>(reader: &mut BitReader<R>) -> Result<Self, DecodeError>;
 }

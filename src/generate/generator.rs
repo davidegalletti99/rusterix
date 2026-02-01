@@ -40,11 +40,8 @@ pub fn generate(ir: &IR) -> TokenStream {
         
         #![allow(unused_imports)]
         #![allow(dead_code)]
-        
-        use rusterix::framework::bit_reader::BitReader;
-        use rusterix::framework::bit_writer::BitWriter;
-        use rusterix::framework::fspec::Fspec;
-        use rusterix::framework::error::DecodeError;
+
+        use rusterix::framework::{BitReader, BitWriter, DecodeError, Fspec, Decode, Encode};
         use std::io::{Read, Write};
         
         // Category record
@@ -90,13 +87,14 @@ mod tests {
         let result = generate(&ir);
         let code = result.to_string();
         
-        // Check for imports
-        assert!(code.contains("use rusterix::framework::bit_reader::BitReader"));
-        assert!(code.contains("use rusterix::framework::fspec::Fspec"));
-        
+        // Check for imports (quote! adds spaces around :: and braces)
+        assert!(code.contains("use crate :: framework"));
+        assert!(code.contains("Decode"));
+        assert!(code.contains("Encode"));
+
         // Check for record
         assert!(code.contains("pub struct Cat048Record"));
-        
+
         // Check for item
         assert!(code.contains("pub struct Item010"));
         assert!(code.contains("pub sac : u8"));

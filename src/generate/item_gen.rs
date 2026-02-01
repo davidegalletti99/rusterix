@@ -51,14 +51,14 @@ pub fn generate_item(item: &IRItem) -> TokenStream {
             (struct_def, decode_impl, encode_impl)
         }
         
-        IRLayout::Extended { part_groups } => {
+        IRLayout::Extended { bytes: _, part_groups } => {
             let struct_def = generate_extended_structs(&item_name, part_groups);
             let decode_impl = generate_extended_decode(&item_name, part_groups);
             let encode_impl = generate_extended_encode(&item_name, part_groups);
             (struct_def, decode_impl, encode_impl)
         }
         
-        IRLayout::Repetitive { bytes, count, elements } => {
+        IRLayout::Repetitive { bytes: _, count, elements } => {
             let element_type = format_ident!("{}Element", item_name);
             let struct_def = generate_repetitive_struct(&item_name, elements, &element_type);
             let decode_impl = generate_repetitive_decode(&item_name, *count, elements, &element_type);
@@ -68,9 +68,20 @@ pub fn generate_item(item: &IRItem) -> TokenStream {
         
         IRLayout::Compound { sub_items } => {
             let struct_def = generate_compound_structs(&item_name, sub_items);
+            let sub_decode_impls = generate_compound_sub_decodes(&item_name, sub_items);
+            let sub_encode_impls = generate_compound_sub_encodes(&item_name, sub_items);
             let decode_impl = generate_compound_decode(&item_name, sub_items);
             let encode_impl = generate_compound_encode(&item_name, sub_items);
-            (struct_def, decode_impl, encode_impl)
+
+            let combined_decode = quote! {
+                #sub_decode_impls
+                #decode_impl
+            };
+            let combined_encode = quote! {
+                #sub_encode_impls
+                #encode_impl
+            };
+            (struct_def, combined_decode, combined_encode)
         }
     };
     
@@ -96,7 +107,7 @@ fn collect_enums(layout: &IRLayout) -> Vec<(String, usize, Vec<(String, u8)>)> {
             collect_enums_from_elements(elements, &mut enums);
         }
         
-        IRLayout::Extended { part_groups } => {
+        IRLayout::Extended { bytes: _, part_groups } => {
             for group in part_groups {
                 collect_enums_from_elements(&group.elements, &mut enums);
             }

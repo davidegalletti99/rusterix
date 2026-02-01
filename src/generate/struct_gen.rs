@@ -220,7 +220,7 @@ pub fn generate_compound_structs(
     let mut main_fields = Vec::new();
     
     for sub_item in sub_items {
-        let sub_name = format_ident!("{}_sub{}", name, sub_item.index);
+        let sub_name = format_ident!("{}Sub{}", name, sub_item.index);
         
         // Generate struct for this sub-item based on its layout
         let sub_struct = match &sub_item.layout {
@@ -228,7 +228,7 @@ pub fn generate_compound_structs(
                 generate_struct(&sub_name, elements)
             }
             
-            IRLayout::Extended { part_groups } => {
+            IRLayout::Extended { bytes: _, part_groups } => {
                 generate_extended_structs(&sub_name, part_groups)
             }
             
