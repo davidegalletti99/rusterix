@@ -41,7 +41,7 @@ pub fn generate(ir: &IR) -> TokenStream {
         #![allow(unused_imports)]
         #![allow(dead_code)]
 
-        use rusterix::framework::{BitReader, BitWriter, DecodeError, Fspec, Decode, Encode};
+        use rusterix::rcore::{BitReader, BitWriter, DecodeError, Fspec, Decode, Encode};
         use std::io::{Read, Write};
         
         // Category record
@@ -88,7 +88,7 @@ mod tests {
         let code = result.to_string();
         
         // Check for imports (quote! adds spaces around :: and braces)
-        assert!(code.contains("use rusterix :: framework"));
+        assert!(code.contains("use rusterix :: rcore"));
         assert!(code.contains("Decode"));
         assert!(code.contains("Encode"));
 
