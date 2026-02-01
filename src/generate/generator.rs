@@ -88,7 +88,7 @@ mod tests {
         let code = result.to_string();
         
         // Check for imports (quote! adds spaces around :: and braces)
-        assert!(code.contains("use crate :: framework"));
+        assert!(code.contains("use rusterix :: framework"));
         assert!(code.contains("Decode"));
         assert!(code.contains("Encode"));
 

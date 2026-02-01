@@ -28,7 +28,6 @@ pub fn fixture_path(category: &str, filename: &str) -> PathBuf {
 }
 
 /// Loads expected Rust code output for a test case.
-#[allow(dead_code)]
 pub fn load_expected_output(test_name: &str) -> String {
     let path = PathBuf::from("tests")
         .join("fixtures")
@@ -62,9 +61,26 @@ pub fn assert_code_not_contains(generated: &str, forbidden_fragments: &[&str]) {
 }
 
 /// Normalizes whitespace in code for comparison.
-#[allow(dead_code)]
 pub fn normalize_whitespace(code: &str) -> String {
     code.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// Asserts that two code strings are equal after normalizing whitespace.
+/// This handles differences from quote! formatting vs stored expected output.
+pub fn assert_normalized_eq(generated: &str, expected: &str, fixture_name: &str) {
+    let gen_normalized = normalize_whitespace(generated);
+    let exp_normalized = normalize_whitespace(expected);
+
+    assert_eq!(
+        gen_normalized,
+        exp_normalized,
+        "Generated code for '{}' doesn't match expected output.\n\
+         --- Generated (first 500 chars) ---\n{}\n\
+         --- Expected (first 500 chars) ---\n{}",
+        fixture_name,
+        &generated.chars().take(500).collect::<String>(),
+        &expected.chars().take(500).collect::<String>()
+    );
 }
 
 /// Builds IR from an XML fixture.
