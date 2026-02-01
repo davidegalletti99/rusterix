@@ -13,7 +13,7 @@ use quote::format_ident;
 /// 
 /// # Examples
 /// 
-/// ```ignore
+/// ```
 /// use quote::format_ident;
 /// use rusterix::generate::utils::rust_type_for_bits;
 /// assert_eq!(rust_type_for_bits(3), "u8");
@@ -42,7 +42,7 @@ pub fn rust_type_for_bits(bits: usize) -> &'static str {
 /// 
 /// # Examples
 /// 
-/// ```ignore
+/// ```
 /// use quote::format_ident;
 /// use rusterix::generate::utils::to_pascal_case;
 /// assert_eq!(to_pascal_case("field_name"), format_ident!("FieldName"));
@@ -79,7 +79,7 @@ pub fn to_pascal_case(name: &str) -> Ident {
 /// 
 /// # Examples
 /// 
-/// ```ignore
+/// ```
 /// use quote::format_ident;
 /// use rusterix::generate::utils::to_snake_case;
 /// assert_eq!(to_snake_case("FieldName"), format_ident!("field_name"));
