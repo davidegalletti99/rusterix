@@ -1,27 +1,22 @@
 # Rusterix
-
 **Rusterix** is a Rust library for encoding and decoding [ASTERIX](https://www.eurocontrol.int/asterix) (All Purpose Structured Eurocontrol Surveillance Information Exchange) messages.
 
 ASTERIX is the standard data format used in air traffic control systems for exchanging surveillance data (radar, ADS-B, etc.).
 
 ## Features
-
 - **Code Generation**: Automatically generate Rust structs from ASTERIX XML category definitions
 - **Bit-level I/O**: Efficient bit-level reading and writing for binary protocols
 - **Type Safety**: Generated code is fully typed with enums, optional fields, and validation
 - **Zero Runtime Dependencies**: Generated code only depends on `rusterix::rcore`
 
 ## Quick Start
-
 ### 1. Add dependency
-
 ```toml
 [dependencies]
 rusterix = { path = "../rusterix" }
 ```
 
 ### 2. Generate code from XML definition
-
 ```rust
 use rusterix::builder::{Builder, RustBuilder};
 
@@ -39,7 +34,6 @@ fn main() {
 ```
 
 ### 3. Use generated code
-
 ```rust
 use rusterix::rcore::{BitReader, BitWriter, DecodeError};
 use crate::generated::cat048::Cat048Record;
@@ -59,7 +53,6 @@ fn encode_record(record: &Cat048Record) -> Result<Vec<u8>, DecodeError> {
 ```
 
 ## Project Structure
-
 ```
 rusterix/
 ├── src/
@@ -86,9 +79,7 @@ rusterix/
 ```
 
 ## Modules
-
 ### `rcore` - Runtime Core
-
 The runtime module provides types used by generated code:
 
 | Type | Description |
@@ -101,49 +92,89 @@ The runtime module provides types used by generated code:
 | `Encode` | Trait for encodable types |
 
 ### `parse` - XML Parsing
-
 Parses ASTERIX XML category definitions into Rust data structures.
 
 ### `transform` - IR Transformation
-
 Converts parsed XML into an Intermediate Representation (IR):
 - Validates bit counts match byte declarations
 - Normalizes different item types
 - Prepares data for code generation
 
 ### `generate` - Code Generation
-
 Generates Rust source code from the IR:
 - Category record structs (`Cat048Record`)
 - Item structs (`Item010`, `Item020`, ...)
 - Enum types with `Unknown` variant for forward compatibility
 - Decode/Encode implementations
 
-## Supported ASTERIX Features
+## XML Schema
 
-### Item Types
+Rusterix uses XML files to define ASTERIX categories. See [XML_SCHEMA.md](XML_SCHEMA.md) for complete documentation.
 
+### Quick Reference
+
+**Data Structures:**
 | Type | Description | Example |
 |------|-------------|---------|
-| Fixed | Fixed-length data | `Item010` with 2 bytes |
-| Extended | Variable-length with FX bits | Target report with optional extensions |
-| Compound | Multiple optional sub-items | Composed data items |
-| Repetitive | Repeated structures | List of plot characteristics |
-| Explicit | Length-prefixed data | Variable content |
+| `<fixed>` | Fixed-length data | `Item010` with 2 bytes |
+| `<extended>` | Variable-length with FX bits | Target report with optional extensions |
+| `<compound>` | Multiple optional sub-items | Composed data items |
+| `<repetitive>` | Repeated structures | List of plot characteristics |
+| `<explicit>` | Length-prefixed data | Variable content |
 
-### Element Types
-
+**Field Elements:**
 | Type | Generated Rust Type |
 |------|---------------------|
-| Field | `u8`, `u16`, `u32`, `u64` |
-| Enum | `enum Name { Value1 = 1, Unknown(u8) }` |
-| EPB (Extended Primary Bit) | `Option<T>` |
-| Spare | Skipped (not in struct) |
+| `<field>` | `u8`, `u16`, `u32`, `u64` |
+| `<enum>` | `enum Name { Value1 = 1, Unknown(u8) }` |
+| `<epb>` | `Option<T>` |
+| `<spare>` | Skipped (not in struct) |
+
+### Minimal XML Example
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE category SYSTEM "rusterix.dtd">
+<category id="048">
+    <!-- Fixed: Data Source Identifier -->
+    <item id="010" frn="1">
+        <fixed bytes="2">
+            <field name="sac" bits="8"/>
+            <field name="sic" bits="8"/>
+        </fixed>
+    </item>
+
+    <!-- Extended: Variable length with FX bits -->
+    <item id="020" frn="2">
+        <extended bytes="1">
+            <part index="0">
+                <enum name="type" bits="3">
+                    <value name="PSR" value="1"/>
+                    <value name="SSR" value="2"/>
+                </enum>
+                <field name="sim" bits="1"/>
+                <field name="rdp" bits="1"/>
+                <spare bits="2"/>
+            </part>
+        </extended>
+    </item>
+
+    <!-- Compound: Multiple optional sub-items -->
+    <item id="130" frn="3">
+        <compound>
+            <fixed bytes="1">
+                <field name="amplitude" bits="8"/>
+            </fixed>
+            <fixed bytes="1">
+                <field name="runlength" bits="8"/>
+            </fixed>
+        </compound>
+    </item>
+</category>
+```
 
 ## Example: Generated Code
-
 From this XML:
-
 ```xml
 <category id="48">
     <item id="010" frn="0">
@@ -156,7 +187,6 @@ From this XML:
 ```
 
 Rusterix generates:
-
 ```rust
 #[derive(Debug, Clone, PartialEq)]
 pub struct Cat048Record {
@@ -187,13 +217,11 @@ impl Encode for Item010 {
 ```
 
 ## Testing
-
 ```bash
 cargo test
 ```
 
 ## License
-
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 Copyright (c) 2025 Davide Galletti
