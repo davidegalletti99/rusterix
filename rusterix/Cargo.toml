@@ -1,0 +1,15 @@
+[package]
+name = "rusterix"
+version = "0.1.0"
+edition = "2021"
+description = "ASTERIX message encoding/decoding library"
+
+[dependencies]
+rusterix-core = { path = "../rusterix-core" }
+rusterix-codegen = { path = "../rusterix-codegen" }
+
+[build-dependencies]
+rusterix-codegen = { path = "../rusterix-codegen" }
+
+[dev-dependencies]
+test-utils = { path = "../test-utils" }

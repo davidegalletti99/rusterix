@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE category SYSTEM "../../../../rusterix.dtd">
+<category id="1">
+    <item id="60" frn="0">
+        <explicit bytes="4">
+            <field name="altitude" bits="16"/>
+            <field name="speed" bits="16"/>
+        </explicit>
+    </item>
+</category>
