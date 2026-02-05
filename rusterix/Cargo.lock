@@ -42,7 +42,6 @@ version = "0.1.0"
 dependencies = [
  "rusterix-codegen",
  "rusterix-core",
- "test-utils",
 ]
 
 [[package]]
@@ -54,15 +53,11 @@ dependencies = [
  "quote",
  "serde",
  "syn",
- "test-utils",
 ]
 
 [[package]]
 name = "rusterix-core"
 version = "0.1.0"
-dependencies = [
- "test-utils",
-]
 
 [[package]]
 name = "serde"
@@ -104,10 +99,6 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
-
-[[package]]
-name = "test-utils"
-version = "0.1.0"
 
 [[package]]
 name = "unicode-ident"

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE category SYSTEM "../../../../rusterix.dtd">
+<category id="1">
+    <item id="10" frn="0">
+        <fixed bytes="2">
+            <field name="value" bits="8"/>
+            <field name="value" bits="8"/>  <!-- DUPLICATE: same scope -->
+        </fixed>
+    </item>
+</category>
