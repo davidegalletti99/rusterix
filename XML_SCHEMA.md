@@ -418,7 +418,26 @@ The DTD enforces the following rules:
 4. **Required attributes**: All required attributes must be present
 5. **Valid nesting**: Elements must be nested according to the DTD structure
 
+## Generated Rust Types
+
+Each XML element maps to a specific Rust type:
+
+| XML Element | Generated Rust Type |
+|-------------|---------------------|
+| `<category>` | `CatNNNRecord` struct with `Option<ItemNNN>` fields |
+| `<item>` | `ItemNNN` struct |
+| `<fixed>` | Struct with fields |
+| `<extended>` | Struct with `partN` and `Option<PartN>` fields |
+| `<compound>` | Struct with `Option<SubN>` fields |
+| `<repetitive>` | Struct with `items: Vec<Element>` |
+| `<explicit>` | Struct with fields |
+| `<field>` | `u8`, `u16`, `u32`, or `u64` (based on bits) |
+| `<enum>` | `enum Name { Variant = N, Unknown(uN) }` |
+| `<epb>` | `Option<T>` wrapping the inner field |
+| `<spare>` | Not included in struct (handled during encode/decode) |
+
 ## See Also
 
+- [README.md](README.md) - Main project documentation
 - [rusterix.dtd](rusterix.dtd) - The Document Type Definition
 - [EUROCONTROL ASTERIX](https://www.eurocontrol.int/asterix) - Official ASTERIX specifications
