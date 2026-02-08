@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 /// Intermediate Representation (IR) for ASTERIX code generation.
 /// 
 /// The IR is a normalized, validated representation of the XML input that is
