@@ -46,6 +46,24 @@ fn emit_decode_op(op: &DecodeOp) -> TokenStream {
                 };
             }
         }
+        DecodeOp::ReadString { name, byte_len } => {
+            quote! {
+                let #name = reader.read_string(#byte_len)?;
+            }
+        }
+        DecodeOp::ReadEpbString { name, byte_len } => {
+            quote! {
+                let #name = {
+                    let valid = reader.read_bits(1)? != 0;
+                    if valid {
+                        Some(reader.read_string(#byte_len)?)
+                    } else {
+                        reader.read_string(#byte_len)?; // Skip the value
+                        None
+                    }
+                };
+            }
+        }
         DecodeOp::SkipSpare { bits } => {
             quote! {
                 reader.read_bits(#bits)?; // Skip spare bits

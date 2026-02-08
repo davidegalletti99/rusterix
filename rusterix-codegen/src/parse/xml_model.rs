@@ -147,7 +147,16 @@ pub struct Field {
 
     #[serde(rename = "@bits")]
     pub bits: usize,
+
+    // defines the type of the field, e.g., "string" or "numeric"
+    #[serde(rename = "@type", default = "default_type")]
+    pub field_type: String,
 }
+/// Default value for the type field.
+fn default_type() -> String {
+    "numeric".into()
+}
+
 
 /// Extended Primary Bit (EPB) - a field/enum with an automatic presence bit.
 #[derive(Debug, Deserialize)]

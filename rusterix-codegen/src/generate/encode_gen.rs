@@ -38,6 +38,22 @@ fn emit_encode_op(op: &EncodeOp) -> TokenStream {
                 }
             }
         }
+        EncodeOp::WriteString { name, byte_len } => {
+            quote! {
+                writer.write_string(&self.#name, #byte_len)?;
+            }
+        }
+        EncodeOp::WriteEpbString { name, byte_len } => {
+            quote! {
+                if let Some(ref value) = self.#name {
+                    writer.write_bits(1, 1)?; // Valid bit
+                    writer.write_string(value, #byte_len)?;
+                } else {
+                    writer.write_bits(0, 1)?; // Invalid bit
+                    writer.write_string("", #byte_len)?; // Write empty padded string
+                }
+            }
+        }
         EncodeOp::WriteSpare { bits } => {
             quote! {
                 writer.write_bits(0, #bits)?; // Write spare bits as zero

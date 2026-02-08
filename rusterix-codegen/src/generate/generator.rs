@@ -78,10 +78,12 @@ mod tests {
                                 IRElement::Field {
                                     name: "sac".to_string(),
                                     bits: 8,
+                                    is_string: false,
                                 },
                                 IRElement::Field {
                                     name: "sic".to_string(),
                                     bits: 8,
+                                    is_string: false,
                                 },
                             ],
                         },

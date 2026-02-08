@@ -11,6 +11,8 @@ fn generate_field(field: &FieldDescriptor) -> TokenStream {
         FieldType::OptionalPrimitive(ty) => quote! { pub #name: Option<#ty> },
         FieldType::Enum(ty) => quote! { pub #name: #ty },
         FieldType::OptionalEnum(ty) => quote! { pub #name: Option<#ty> },
+        FieldType::FixedString(_) => quote! { pub #name: String },
+        FieldType::OptionalFixedString(_) => quote! { pub #name: Option<String> },
     }
 }
 
@@ -141,6 +143,30 @@ mod tests {
         let result = generate_field(&field);
         let code = result.to_string();
         assert!(code.contains("pub optional_field : Option < u16 >"));
+    }
+
+    #[test]
+    fn test_generate_field_fixed_string() {
+        let field = FieldDescriptor {
+            name: format_ident!("aircraft_id"),
+            type_tokens: FieldType::FixedString(6),
+        };
+
+        let result = generate_field(&field);
+        let code = result.to_string();
+        assert!(code.contains("pub aircraft_id : String"));
+    }
+
+    #[test]
+    fn test_generate_field_optional_fixed_string() {
+        let field = FieldDescriptor {
+            name: format_ident!("callsign"),
+            type_tokens: FieldType::OptionalFixedString(8),
+        };
+
+        let result = generate_field(&field);
+        let code = result.to_string();
+        assert!(code.contains("pub callsign : Option < String >"));
     }
 
     #[test]

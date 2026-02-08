@@ -159,10 +159,12 @@
     Attributes:
         bits - Field width in bits
         name - Field identifier/name
+        type - Optional attribute to indicate if the field should be treated as a string or not (e.g., type="string")
 -->
 <!ELEMENT field EMPTY>
 <!ATTLIST field %element-attributes;
     name                CDATA #REQUIRED
+    type              CDATA #IMPLIED
 >
 
 <!--

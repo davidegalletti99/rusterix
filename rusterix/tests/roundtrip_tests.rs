@@ -112,6 +112,7 @@ fn roundtrip_record_all_items() {
     let original = Record {
         item010: Some(Item010 { sac: 42, sic: 128 }),
         item020: Some(Item020 { typ: 99 }),
+        item240: Some(Item240 { aircraft_id: "TEST".to_string() }),
     };
 
     let mut buffer = Vec::new();
@@ -130,6 +131,7 @@ fn roundtrip_record_partial_items() {
     let original = Record {
         item010: Some(Item010 { sac: 1, sic: 2 }),
         item020: None,
+        item240: None,
     };
 
     let mut buffer = Vec::new();
@@ -148,6 +150,121 @@ fn roundtrip_record_empty() {
     let original = Record {
         item010: None,
         item020: None,
+        item240: None,
+    };
+
+    let mut buffer = Vec::new();
+    original.encode(&mut buffer).unwrap();
+
+    let mut reader = Cursor::new(&buffer);
+    let decoded = Record::decode(&mut reader).unwrap();
+
+    assert_eq!(original, decoded);
+}
+
+// ============================================================================
+// String Field Roundtrip Tests
+// ============================================================================
+
+#[test]
+fn roundtrip_string_field_exact_length() {
+    use multi_item_record::cat048::*;
+
+    // 6-byte field with exactly 6 characters
+    let original = Item240 { aircraft_id: "ABCDEF".to_string() };
+
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    let mut reader = BitReader::new(Cursor::new(&buffer));
+    let decoded = Item240::decode(&mut reader).unwrap();
+
+    assert_eq!(original, decoded);
+}
+
+#[test]
+fn roundtrip_string_field_shorter_than_field() {
+    use multi_item_record::cat048::*;
+
+    // 6-byte field with only 3 characters — should be space-padded on wire
+    let original = Item240 { aircraft_id: "ABC".to_string() };
+
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    // Verify wire format: 'A' 'B' 'C' ' ' ' ' ' '
+    assert_eq!(buffer.len(), 6);
+    assert_eq!(buffer, vec![0x41, 0x42, 0x43, 0x20, 0x20, 0x20]);
+
+    let mut reader = BitReader::new(Cursor::new(&buffer));
+    let decoded = Item240::decode(&mut reader).unwrap();
+
+    assert_eq!(decoded, original);
+}
+
+#[test]
+fn roundtrip_string_field_empty() {
+    use multi_item_record::cat048::*;
+
+    // Empty string — all spaces on wire
+    let original = Item240 { aircraft_id: "".to_string() };
+
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    // Should be 6 space bytes
+    assert_eq!(buffer, vec![0x20, 0x20, 0x20, 0x20, 0x20, 0x20]);
+
+    let mut reader = BitReader::new(Cursor::new(&buffer));
+    let decoded = Item240::decode(&mut reader).unwrap();
+
+    assert_eq!(decoded, original);
+}
+
+#[test]
+fn roundtrip_string_field_known_bytes() {
+    use multi_item_record::cat048::*;
+
+    // Decode from known byte sequence: "BAW123" (British Airways callsign)
+    let bytes = [0x42, 0x41, 0x57, 0x31, 0x32, 0x33]; // "BAW123"
+
+    let mut reader = BitReader::new(Cursor::new(&bytes));
+    let item = Item240::decode(&mut reader).unwrap();
+
+    assert_eq!(item.aircraft_id, "BAW123");
+
+    // Re-encode and verify exact bytes
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        item.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    assert_eq!(&bytes[..], &buffer[..]);
+}
+
+#[test]
+fn roundtrip_string_field_in_record() {
+    use multi_item_record::cat048::*;
+
+    // String field only in record (other items absent)
+    let original = Record {
+        item010: None,
+        item020: None,
+        item240: Some(Item240 { aircraft_id: "DLH42".to_string() }),
     };
 
     let mut buffer = Vec::new();

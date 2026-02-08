@@ -11,6 +11,13 @@ pub struct LoweredIR {
     pub items: Vec<LoweredItem>,
 }
 
+/// Lowered record: flat list of pre-computed entries.
+#[derive(Debug)]
+pub struct LoweredRecord {
+    pub name: Ident,
+    pub entries: Vec<RecordEntry>,
+}
+
 /// Pre-computed record entry for a single item in the category record.
 #[derive(Debug)]
 pub struct RecordEntry {
@@ -18,13 +25,6 @@ pub struct RecordEntry {
     pub type_name: Ident,
     pub fspec_byte: usize,
     pub fspec_bit: u8,
-}
-
-/// Lowered record: flat list of pre-computed entries.
-#[derive(Debug)]
-pub struct LoweredRecord {
-    pub name: Ident,
-    pub entries: Vec<RecordEntry>,
 }
 
 /// A single lowered item with all code-gen info pre-resolved.
@@ -124,6 +124,10 @@ pub enum FieldType {
     Enum(Ident),
     /// Option<EnumType>
     OptionalEnum(Ident),
+    /// Fixed-length string (byte_len is the number of bytes on the wire)
+    FixedString(usize),
+    /// Option<String> for EPB-wrapped string fields
+    OptionalFixedString(usize),
 }
 
 /// A pre-collected enum definition.
@@ -149,6 +153,8 @@ pub enum DecodeOp {
     ReadEnum { name: Ident, bits: usize, enum_type: Ident },
     ReadEpbField { name: Ident, bits: usize, rust_type: Ident },
     ReadEpbEnum { name: Ident, bits: usize, enum_type: Ident },
+    ReadString { name: Ident, byte_len: usize },
+    ReadEpbString { name: Ident, byte_len: usize },
     SkipSpare { bits: usize },
     ReadLengthByte,
 }
@@ -162,6 +168,8 @@ pub enum EncodeOp {
     WriteEnum { name: Ident, bits: usize },
     WriteEpbField { name: Ident, bits: usize },
     WriteEpbEnum { name: Ident, bits: usize },
+    WriteString { name: Ident, byte_len: usize },
+    WriteEpbString { name: Ident, byte_len: usize },
     WriteSpare { bits: usize },
     WriteLengthByte { total_bytes: usize },
 }

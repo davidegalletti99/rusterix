@@ -165,22 +165,38 @@ fn lower_fields(elements: &[IRElement]) -> Vec<FieldDescriptor> {
 
 fn lower_field(element: &IRElement) -> Option<FieldDescriptor> {
     match element {
-        IRElement::Field { name, bits } => {
+        IRElement::Field { name, bits, is_string } => {
             let field_name = to_snake_case(name);
-            let rust_type = format_ident!("{}", rust_type_for_bits(*bits));
-            Some(FieldDescriptor {
-                name: field_name,
-                type_tokens: FieldType::Primitive(rust_type),
-            })
-        }
-        IRElement::EPB { content } => match content.as_ref() {
-            IRElement::Field { name, bits } => {
-                let field_name = to_snake_case(name);
+            if *is_string {
+                let byte_len = bits / 8;
+                Some(FieldDescriptor {
+                    name: field_name,
+                    type_tokens: FieldType::FixedString(byte_len),
+                })
+            } else {
                 let rust_type = format_ident!("{}", rust_type_for_bits(*bits));
                 Some(FieldDescriptor {
                     name: field_name,
-                    type_tokens: FieldType::OptionalPrimitive(rust_type),
+                    type_tokens: FieldType::Primitive(rust_type),
                 })
+            }
+        }
+        IRElement::EPB { content } => match content.as_ref() {
+            IRElement::Field { name, bits, is_string } => {
+                let field_name = to_snake_case(name);
+                if *is_string {
+                    let byte_len = bits / 8;
+                    Some(FieldDescriptor {
+                        name: field_name,
+                        type_tokens: FieldType::OptionalFixedString(byte_len),
+                    })
+                } else {
+                    let rust_type = format_ident!("{}", rust_type_for_bits(*bits));
+                    Some(FieldDescriptor {
+                        name: field_name,
+                        type_tokens: FieldType::OptionalPrimitive(rust_type),
+                    })
+                }
             }
             IRElement::Enum { name, .. } => {
                 let field_name = to_snake_case(name);
@@ -221,30 +237,55 @@ fn lower_element_ops_decode(elements: &[IRElement]) -> Vec<DecodeOp> {
 
 fn lower_element_decode(element: &IRElement) -> DecodeOp {
     match element {
-        IRElement::Field { name, bits } => DecodeOp::ReadField {
-            name: to_snake_case(name),
-            bits: *bits,
-            rust_type: format_ident!("{}", rust_type_for_bits(*bits)),
-        },
-        IRElement::EPB { content } => match content.as_ref() {
-            IRElement::Field { name, bits } => DecodeOp::ReadEpbField {
-                name: to_snake_case(name),
-                bits: *bits,
-                rust_type: format_ident!("{}", rust_type_for_bits(*bits)),
-            },
-            IRElement::Enum { name, bits, .. } => DecodeOp::ReadEpbEnum {
+        IRElement::Field { name, bits, is_string } => {
+            if *is_string {
+                DecodeOp::ReadString {
+                    name: to_snake_case(name),
+                    byte_len: bits / 8,
+                }
+            } else {
+                DecodeOp::ReadField {
+                    name: to_snake_case(name),
+                    bits: *bits,
+                    rust_type: format_ident!("{}", rust_type_for_bits(*bits)),
+                }
+            }
+        }
+        IRElement::EPB { content } 
+            => lower_epb_element_decode(content.as_ref()),
+        IRElement::Enum { name, bits, .. } 
+            => DecodeOp::ReadEnum {
                 name: to_snake_case(name),
                 bits: *bits,
                 enum_type: to_pascal_case(name),
             },
-            _ => panic!("EPB can only contain Field or Enum"),
-        },
-        IRElement::Enum { name, bits, .. } => DecodeOp::ReadEnum {
+        IRElement::Spare { bits }
+            => DecodeOp::SkipSpare { bits: *bits },
+    }
+}
+
+fn lower_epb_element_decode(element: &IRElement) -> DecodeOp {
+    match element { 
+        IRElement::Field { name, bits, is_string } => {
+            if *is_string {
+                DecodeOp::ReadEpbString {
+                    name: to_snake_case(name),
+                    byte_len: bits / 8,
+                }
+            } else {
+                DecodeOp::ReadEpbField {
+                    name: to_snake_case(name),
+                    bits: *bits,
+                    rust_type: format_ident!("{}", rust_type_for_bits(*bits)),
+                }
+            }
+        }
+        IRElement::Enum { name, bits, .. } => DecodeOp::ReadEpbEnum {
             name: to_snake_case(name),
             bits: *bits,
             enum_type: to_pascal_case(name),
         },
-        IRElement::Spare { bits } => DecodeOp::SkipSpare { bits: *bits },
+        _ => panic!("EPB can only contain Field or Enum"),
     }
 }
 
@@ -265,26 +306,48 @@ fn lower_element_ops_encode(elements: &[IRElement]) -> Vec<EncodeOp> {
 
 fn lower_element_encode(element: &IRElement) -> EncodeOp {
     match element {
-        IRElement::Field { name, bits } => EncodeOp::WriteField {
-            name: to_snake_case(name),
-            bits: *bits,
-        },
-        IRElement::EPB { content } => match content.as_ref() {
-            IRElement::Field { name, bits } => EncodeOp::WriteEpbField {
-                name: to_snake_case(name),
-                bits: *bits,
-            },
-            IRElement::Enum { name, bits, .. } => EncodeOp::WriteEpbEnum {
-                name: to_snake_case(name),
-                bits: *bits,
-            },
-            _ => panic!("EPB can only contain Field or Enum"),
-        },
+        IRElement::Field { name, bits, is_string } => {
+            if *is_string {
+                EncodeOp::WriteString {
+                    name: to_snake_case(name),
+                    byte_len: bits / 8,
+                }
+            } else {
+                EncodeOp::WriteField {
+                    name: to_snake_case(name),
+                    bits: *bits,
+                }
+            }
+        }
+        IRElement::EPB { content } => lower_epb_element_encode(content.as_ref()),
         IRElement::Enum { name, bits, .. } => EncodeOp::WriteEnum {
             name: to_snake_case(name),
             bits: *bits,
         },
         IRElement::Spare { bits } => EncodeOp::WriteSpare { bits: *bits },
+    }
+}
+
+fn lower_epb_element_encode(element: &IRElement) -> EncodeOp {
+    match element {
+        IRElement::Field { name, bits, is_string } => {
+            if *is_string {
+                EncodeOp::WriteEpbString {
+                    name: to_snake_case(name),
+                    byte_len: bits / 8,
+                }
+            } else {
+                EncodeOp::WriteEpbField {
+                    name: to_snake_case(name),
+                    bits: *bits,
+                }
+            }
+        }
+        IRElement::Enum { name, bits, .. } => EncodeOp::WriteEpbEnum {
+            name: to_snake_case(name),
+            bits: *bits,
+        },
+        _ => panic!("EPB can only contain Field or Enum"),
     }
 }
 
@@ -356,8 +419,8 @@ mod tests {
                     layout: IRLayout::Fixed {
                         bytes: 2,
                         elements: vec![
-                            IRElement::Field { name: "sac".to_string(), bits: 8 },
-                            IRElement::Field { name: "sic".to_string(), bits: 8 },
+                            IRElement::Field { name: "sac".to_string(), bits: 8 , is_string: false},
+                            IRElement::Field { name: "sic".to_string(), bits: 8, is_string: false},
                         ],
                     },
                 }],
@@ -396,7 +459,7 @@ mod tests {
                     layout: IRLayout::Explicit {
                         bytes: 2,
                         elements: vec![
-                            IRElement::Field { name: "data".to_string(), bits: 16 },
+                            IRElement::Field { name: "data".to_string(), bits: 16, is_string: false },
                         ],
                     },
                 }],
@@ -427,7 +490,7 @@ mod tests {
                     layout: IRLayout::Fixed {
                         bytes: 1,
                         elements: vec![
-                            IRElement::Field { name: "data".to_string(), bits: 3 },
+                            IRElement::Field { name: "data".to_string(), bits: 3, is_string: false },
                             IRElement::Spare { bits: 5 },
                         ],
                     },
@@ -465,6 +528,7 @@ mod tests {
                                 content: Box::new(IRElement::Field {
                                     name: "opt_val".to_string(),
                                     bits: 15,
+                                    is_string: false,
                                 }),
                             },
                         ],
@@ -561,14 +625,14 @@ mod tests {
                             IRPartGroup {
                                 index: 0,
                                 elements: vec![
-                                    IRElement::Field { name: "a".to_string(), bits: 3 },
-                                    IRElement::Field { name: "b".to_string(), bits: 4 },
+                                    IRElement::Field { name: "a".to_string(), bits: 3, is_string: false },
+                                    IRElement::Field { name: "b".to_string(), bits: 4, is_string: false },
                                 ],
                             },
                             IRPartGroup {
                                 index: 1,
                                 elements: vec![
-                                    IRElement::Field { name: "c".to_string(), bits: 7 },
+                                    IRElement::Field { name: "c".to_string(), bits: 7, is_string: false },
                                 ],
                             },
                         ],
@@ -609,7 +673,7 @@ mod tests {
                                 layout: IRLayout::Fixed {
                                     bytes: 2,
                                     elements: vec![
-                                        IRElement::Field { name: "x".to_string(), bits: 16 },
+                                        IRElement::Field { name: "x".to_string(), bits: 16, is_string: false },
                                     ],
                                 },
                             },
@@ -618,7 +682,7 @@ mod tests {
                                 layout: IRLayout::Fixed {
                                     bytes: 1,
                                     elements: vec![
-                                        IRElement::Field { name: "y".to_string(), bits: 8 },
+                                        IRElement::Field { name: "y".to_string(), bits: 8, is_string: false },
                                     ],
                                 },
                             },
@@ -639,6 +703,77 @@ mod tests {
                 assert_eq!(sub_items[0].fspec_bit, 0);
             }
             _ => panic!("Expected Compound kind"),
+        }
+    }
+
+    #[test]
+    fn test_lower_string_field() {
+        let ir = IR {
+            category: IRCategory {
+                id: 48,
+                items: vec![IRItem {
+                    id: 240,
+                    frn: 3,
+                    layout: IRLayout::Fixed {
+                        bytes: 6,
+                        elements: vec![
+                            IRElement::Field { name: "aircraft_id".to_string(), bits: 48, is_string: true },
+                        ],
+                    },
+                }],
+            },
+        };
+
+        let lowered = lower(&ir);
+        let item = &lowered.items[0];
+        assert_eq!(item.name, format_ident!("Item240"));
+
+        match &item.kind {
+            LoweredItemKind::Simple { fields, decode_ops, encode_ops, .. } => {
+                assert_eq!(fields.len(), 1);
+                assert!(matches!(fields[0].type_tokens, FieldType::FixedString(6)));
+                assert!(matches!(decode_ops[0], DecodeOp::ReadString { byte_len: 6, .. }));
+                assert!(matches!(encode_ops[0], EncodeOp::WriteString { byte_len: 6, .. }));
+            }
+            _ => panic!("Expected Simple kind"),
+        }
+    }
+
+    #[test]
+    fn test_lower_epb_string_field() {
+        let ir = IR {
+            category: IRCategory {
+                id: 48,
+                items: vec![IRItem {
+                    id: 30,
+                    frn: 2,
+                    layout: IRLayout::Fixed {
+                        bytes: 7,
+                        elements: vec![
+                            IRElement::EPB {
+                                content: Box::new(IRElement::Field {
+                                    name: "callsign".to_string(),
+                                    bits: 48,
+                                    is_string: true,
+                                }),
+                            },
+                        ],
+                    },
+                }],
+            },
+        };
+
+        let lowered = lower(&ir);
+        let item = &lowered.items[0];
+
+        match &item.kind {
+            LoweredItemKind::Simple { fields, decode_ops, encode_ops, .. } => {
+                assert_eq!(fields.len(), 1);
+                assert!(matches!(fields[0].type_tokens, FieldType::OptionalFixedString(6)));
+                assert!(matches!(decode_ops[0], DecodeOp::ReadEpbString { byte_len: 6, .. }));
+                assert!(matches!(encode_ops[0], EncodeOp::WriteEpbString { byte_len: 6, .. }));
+            }
+            _ => panic!("Expected Simple kind"),
         }
     }
 }

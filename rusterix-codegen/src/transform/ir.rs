@@ -136,6 +136,9 @@ pub enum IRElement {
         
         /// Number of bits
         bits: usize,
+
+        /// Whether this field should be treated as a string
+        is_string: bool,
     },
     
     /// An Extended Primary Bit field - field/enum with automatic validity bit.

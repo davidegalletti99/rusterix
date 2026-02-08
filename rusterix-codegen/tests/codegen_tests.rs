@@ -261,6 +261,41 @@ fn generate_encode_impl() {
 
 
 // ============================================================================
+// String Field Code Generation
+// ============================================================================
+
+#[test]
+fn generate_string_field_struct_type() {
+    let code = generate_from_fixture("valid", "multi_item_record.xml");
+
+    // String field should generate a String type, not a numeric type
+    assert_code_contains(&code, &[
+        "pub struct Item240",
+        "pub aircraft_id : String",
+    ]);
+}
+
+#[test]
+fn generate_string_field_decode() {
+    let code = generate_from_fixture("valid", "multi_item_record.xml");
+
+    // String decode should use read_string, not read_bits
+    assert_code_contains(&code, &[
+        "read_string (6usize)",
+    ]);
+}
+
+#[test]
+fn generate_string_field_encode() {
+    let code = generate_from_fixture("valid", "multi_item_record.xml");
+
+    // String encode should use write_string, not write_bits
+    assert_code_contains(&code, &[
+        "write_string (& self . aircraft_id , 6usize)",
+    ]);
+}
+
+// ============================================================================
 // Edge Cases
 // ============================================================================
 

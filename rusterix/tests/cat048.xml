@@ -137,7 +137,7 @@
     <!-- I048/240: Aircraft Identification -->
     <item id="240" frn="9">
         <fixed bytes="6">
-            <field name="aircraft_id" bits="48"/>
+            <field name="aircraft_id" bits="48" type="string"/>
         </fixed>
     </item>
 
