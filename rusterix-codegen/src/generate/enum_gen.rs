@@ -1,93 +1,36 @@
 use proc_macro2::TokenStream;
-use quote::{quote};
+use quote::quote;
 
-use super::utils::to_pascal_case;
+use crate::lower::LoweredEnum;
 
-/// Generates a Rust enum from ASTERIX enum definition.
-/// 
+/// Generates a Rust enum from a pre-lowered enum definition.
+///
 /// Creates an enum with:
 /// - Named variants for all defined values
 /// - An Unknown(u8) variant for undefined values
 /// - TryFrom<u8> implementation for decoding
 /// - Into<u8> implementation for encoding
-/// 
-/// # Arguments
-/// 
-/// * `name` - The enum type name
-/// * `bits` - Number of bits used to represent the enum
-/// * `values` - List of (variant_name, numeric_value) pairs
-/// 
-/// # Returns
-/// 
-/// TokenStream containing the complete enum definition and implementations.
-/// 
-/// # Example Generated Code
-/// 
-/// ```rust
-/// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-/// #[repr(u8)]
-/// pub enum TargetType {
-///     Psr = 1,
-///     Ssr = 2,
-///     Unknown(u8),
-/// }
-/// 
-/// impl TryFrom<u8> for TargetType {
-///     type Error = ();
-///     fn try_from(value: u8) -> Result<Self, Self::Error> {
-///         match value {
-///             1 => Ok(Self::Psr),
-///             2 => Ok(Self::Ssr),
-///             _ => Ok(Self::Unknown(value)),
-///         }
-///     }
-/// }
-/// 
-/// impl From<TargetType> for u8 {
-///     fn from(val: TargetType) -> u8 {
-///         match val {
-///             TargetType::Psr => 1,
-///             TargetType::Ssr => 2,
-///             TargetType::Unknown(v) => v,
-///         }
-///     }
-/// }
-/// ```
-pub fn generate_enum(
-    name: &str,
-    bits: usize,
-    values: &[(String, u8)],
-) -> TokenStream {
-    let _ = bits;
-    let enum_name = to_pascal_case(name);
-    
-    // Generate variants for all defined values
-    let variants: Vec<_> = values
-        .iter()
-        .map(|(variant_name, value)| {
-            let variant_ident = to_pascal_case(variant_name);
-            quote! { #variant_ident = #value }
-        })
-        .collect();
-    
-    // Generate TryFrom match arms
-    let try_from_arms: Vec<_> = values
-        .iter()
-        .map(|(variant_name, value)| {
-            let variant_ident = to_pascal_case(variant_name);
-            quote! { #value => Ok(Self::#variant_ident) }
-        })
-        .collect();
-    
-    // Generate From match arms
-    let from_arms: Vec<_> = values
-        .iter()
-        .map(|(variant_name, value)| {
-            let variant_ident = to_pascal_case(variant_name);
-            quote! { #enum_name::#variant_ident => #value }
-        })
-        .collect();
-    
+pub fn generate_enum(lowered: &LoweredEnum) -> TokenStream {
+    let enum_name = &lowered.name;
+
+    let variants: Vec<_> = lowered.variants.iter().map(|v| {
+        let vname = &v.name;
+        let vval = v.value;
+        quote! { #vname = #vval }
+    }).collect();
+
+    let try_from_arms: Vec<_> = lowered.variants.iter().map(|v| {
+        let vname = &v.name;
+        let vval = v.value;
+        quote! { #vval => Ok(Self::#vname) }
+    }).collect();
+
+    let from_arms: Vec<_> = lowered.variants.iter().map(|v| {
+        let vname = &v.name;
+        let vval = v.value;
+        quote! { #enum_name::#vname => #vval }
+    }).collect();
+
     quote! {
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         #[repr(u8)]
@@ -95,7 +38,7 @@ pub fn generate_enum(
             #(#variants,)*
             Unknown(u8),
         }
-        
+
         impl TryFrom<u8> for #enum_name {
             type Error = ();
 
@@ -106,7 +49,7 @@ pub fn generate_enum(
                 }
             }
         }
-        
+
         impl From<#enum_name> for u8 {
             fn from(val: #enum_name) -> u8 {
                 match val {
@@ -121,28 +64,28 @@ pub fn generate_enum(
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+    use quote::format_ident;
+    use crate::lower::LoweredEnumVariant;
+
     #[test]
     fn test_generate_enum() {
-        let values = vec![
-            ("PSR".to_string(), 1),
-            ("SSR".to_string(), 2),
-            ("COMBINED".to_string(), 3),
-        ];
+        let lowered = LoweredEnum {
+            name: format_ident!("TargetType"),
+            variants: vec![
+                LoweredEnumVariant { name: format_ident!("Psr"), value: 1 },
+                LoweredEnumVariant { name: format_ident!("Ssr"), value: 2 },
+                LoweredEnumVariant { name: format_ident!("Combined"), value: 3 },
+            ],
+        };
 
-        let result = generate_enum("target_type", 2, &values);
+        let result = generate_enum(&lowered);
         let code = result.to_string();
 
-        // Check that enum is generated
         assert!(code.contains("pub enum TargetType"));
-
-        // Check that variants are present (quote! renders u8 literals with suffix)
         assert!(code.contains("Psr = 1u8"));
         assert!(code.contains("Ssr = 2u8"));
         assert!(code.contains("Combined = 3u8"));
-        assert!(code.contains("Unknown (u8)")); // quote! adds space
-
-        // Check that implementations exist
+        assert!(code.contains("Unknown (u8)"));
         assert!(code.contains("impl TryFrom < u8 > for TargetType"));
         assert!(code.contains("impl From < TargetType > for u8"));
     }

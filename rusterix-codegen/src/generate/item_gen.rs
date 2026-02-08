@@ -1,8 +1,7 @@
 use proc_macro2::TokenStream;
-use quote::{quote, format_ident};
-use syn::Ident;
+use quote::quote;
 
-use crate::transform::ir::*;
+use crate::lower::{LoweredItem, LoweredItemKind};
 use super::{
     struct_gen::*,
     decode_gen::*,
@@ -10,77 +9,56 @@ use super::{
     enum_gen::*,
 };
 
-pub fn build_struct_name(item_id: u8) -> Ident {
-    format_ident!("Item{:03}", item_id)
-}
-
-pub fn build_field_name(item_id: u8) -> Ident {
-    format_ident!("item{:03}", item_id)
-}
-/// Generates all code for a single ASTERIX item.
-/// 
+/// Generates all code for a single ASTERIX item from its lowered representation.
+///
 /// This includes:
 /// - Enum definitions for any enum fields
 /// - Struct definition(s) for the item
 /// - Decode implementation
 /// - Encode implementation
-/// 
-/// # Arguments
-/// 
-/// * `item` - The IR item to generate code for
-/// 
-/// # Returns
-/// 
-/// TokenStream containing all generated code for this item.
-pub fn generate_item(item: &IRItem) -> TokenStream {
-    let item_name = build_struct_name(item.id);
-    
-    // Collect all enums that need to be generated
-    let enums = collect_enums(&item.layout);
-    
-    // Generate enum definitions
-    let enum_defs: Vec<_> = enums.iter().map(|(name, bits, values)| {
-        generate_enum(name, *bits, values)
-    }).collect();
-    
-    // Generate struct and implementations based on layout type
-    let (struct_def, decode_impl, encode_impl) = match &item.layout {
-        IRLayout::Fixed { bytes, elements } => {
-            let struct_def = generate_struct(&item_name, elements);
-            let decode_impl = generate_simple_decode(&item_name, elements, false);
-            let encode_impl = generate_simple_encode(&item_name, *bytes, elements, false);
-            (struct_def, decode_impl, encode_impl)
-        }
-        
-        IRLayout::Explicit { bytes, elements } => {
-            let struct_def = generate_struct(&item_name, elements);
-            let decode_impl = generate_simple_decode(&item_name, elements, true);
-            let encode_impl = generate_simple_encode(&item_name, *bytes, elements, true);
-            (struct_def, decode_impl, encode_impl)
-        }
-        
-        IRLayout::Extended { bytes: _, part_groups } => {
-            let struct_def = generate_extended_structs(&item_name, part_groups);
-            let decode_impl = generate_extended_decode(&item_name, part_groups);
-            let encode_impl = generate_extended_encode(&item_name, part_groups);
-            (struct_def, decode_impl, encode_impl)
-        }
-        
-        IRLayout::Repetitive { bytes: _, count, elements } => {
-            let element_type = format_ident!("{}Element", item_name);
-            let struct_def = generate_repetitive_struct(&item_name, elements, &element_type);
-            let decode_impl = generate_repetitive_decode(&item_name, *count, elements, &element_type);
-            let encode_impl = generate_repetitive_encode(&item_name, elements, &element_type);
-            (struct_def, decode_impl, encode_impl)
-        }
-        
-        IRLayout::Compound { sub_items } => {
-            let struct_def = generate_compound_structs(&item_name, sub_items);
-            let sub_decode_impls = generate_compound_sub_decodes(&item_name, sub_items);
-            let sub_encode_impls = generate_compound_sub_encodes(&item_name, sub_items);
-            let decode_impl = generate_compound_decode(&item_name, sub_items);
-            let encode_impl = generate_compound_encode(&item_name, sub_items);
+pub fn generate_item(item: &LoweredItem) -> TokenStream {
+    let item_name = &item.name;
 
+    let enum_defs: Vec<_> = item.enums.iter().map(generate_enum).collect();
+
+    let (struct_def, decode_impl, encode_impl) = match &item.kind {
+        LoweredItemKind::Simple { fields, decode_ops, encode_ops, .. } => {
+            let struct_def = generate_struct(item_name, fields);
+            let decode_impl = generate_simple_decode(item_name, decode_ops, fields);
+            let encode_impl = generate_simple_encode(item_name, encode_ops);
+            (struct_def, decode_impl, encode_impl)
+        }
+
+        LoweredItemKind::Extended { parts } => {
+            let struct_def = generate_extended_structs(item_name, parts);
+            let decode_impl = generate_extended_decode(item_name, parts);
+            let encode_impl = generate_extended_encode(item_name, parts);
+            (struct_def, decode_impl, encode_impl)
+        }
+
+        LoweredItemKind::Repetitive { element_type_name, count, fields, decode_ops, encode_ops } => {
+            let struct_def = generate_repetitive_struct(item_name, element_type_name, fields);
+            let decode_impl = generate_repetitive_decode(item_name, *count, element_type_name, decode_ops, fields);
+            let encode_impl = generate_repetitive_encode(item_name, element_type_name, encode_ops);
+            (struct_def, decode_impl, encode_impl)
+        }
+
+        LoweredItemKind::Compound { sub_items } => {
+            // Collect enums from sub-items
+            let sub_enum_defs: Vec<_> = sub_items.iter()
+                .flat_map(|sub| sub.enums.iter().map(generate_enum))
+                .collect();
+
+            let struct_def = generate_compound_structs(item_name, sub_items);
+            let sub_decode_impls = generate_compound_sub_decodes(sub_items);
+            let sub_encode_impls = generate_compound_sub_encodes(sub_items);
+            let decode_impl = generate_compound_decode(item_name, sub_items);
+            let encode_impl = generate_compound_encode(item_name, sub_items);
+
+            let combined_struct = quote! {
+                #(#sub_enum_defs)*
+                #struct_def
+            };
             let combined_decode = quote! {
                 #sub_decode_impls
                 #decode_impl
@@ -89,105 +67,63 @@ pub fn generate_item(item: &IRItem) -> TokenStream {
                 #sub_encode_impls
                 #encode_impl
             };
-            (struct_def, combined_decode, combined_encode)
+            (combined_struct, combined_decode, combined_encode)
         }
     };
-    
+
     quote! {
         #(#enum_defs)*
-        
+
         #struct_def
-        
+
         #decode_impl
-        
+
         #encode_impl
-    }
-}
-
-/// Recursively collects all enum definitions from a layout.
-/// 
-/// Returns a vector of (name, bits, values) tuples.
-fn collect_enums(layout: &IRLayout) -> Vec<(String, usize, Vec<(String, u8)>)> {
-    let mut enums = Vec::new();
-    
-    match layout {
-        IRLayout::Fixed { elements, .. } | IRLayout::Explicit { elements, .. } => {
-            collect_enums_from_elements(elements, &mut enums);
-        }
-        
-        IRLayout::Extended { bytes: _, part_groups } => {
-            for group in part_groups {
-                collect_enums_from_elements(&group.elements, &mut enums);
-            }
-        }
-        
-        IRLayout::Repetitive { elements, .. } => {
-            collect_enums_from_elements(elements, &mut enums);
-        }
-        
-        IRLayout::Compound { sub_items } => {
-            for sub_item in sub_items {
-                let sub_enums = collect_enums(&sub_item.layout);
-                enums.extend(sub_enums);
-            }
-        }
-    }
-    
-    enums
-}
-
-fn collect_enums_from_elements(
-    elements: &[IRElement],
-    enums: &mut Vec<(String, usize, Vec<(String, u8)>)>,
-) {
-    for element in elements {
-        match element {
-            IRElement::Enum { name, bits, values } => {
-                enums.push((name.clone(), *bits, values.clone()));
-            }
-            
-            IRElement::EPB { content } => {
-                if let IRElement::Enum { name, bits, values } = content.as_ref() {
-                    enums.push((name.clone(), *bits, values.clone()));
-                }
-            }
-            
-            _ => {}
-        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+    use quote::format_ident;
+    use crate::lower::*;
+
     #[test]
-    fn test_collect_enums() {
-        let elements = vec![
-            IRElement::Field {
-                name: "sac".to_string(),
-                bits: 8,
-            },
-            IRElement::Enum {
-                name: "target_type".to_string(),
-                bits: 2,
-                values: vec![
-                    ("PSR".to_string(), 1),
-                    ("SSR".to_string(), 2),
+    fn test_generate_simple_item() {
+        let item = LoweredItem {
+            name: format_ident!("Item010"),
+            enums: vec![],
+            kind: LoweredItemKind::Simple {
+                is_explicit: false,
+                byte_size: 2,
+                fields: vec![
+                    FieldDescriptor {
+                        name: format_ident!("sac"),
+                        type_tokens: FieldType::Primitive(format_ident!("u8")),
+                    },
+                    FieldDescriptor {
+                        name: format_ident!("sic"),
+                        type_tokens: FieldType::Primitive(format_ident!("u8")),
+                    },
+                ],
+                decode_ops: vec![
+                    DecodeOp::ReadField { name: format_ident!("sac"), bits: 8, rust_type: format_ident!("u8") },
+                    DecodeOp::ReadField { name: format_ident!("sic"), bits: 8, rust_type: format_ident!("u8") },
+                ],
+                encode_ops: vec![
+                    EncodeOp::WriteField { name: format_ident!("sac"), bits: 8 },
+                    EncodeOp::WriteField { name: format_ident!("sic"), bits: 8 },
                 ],
             },
-        ];
-        
-        let layout = IRLayout::Fixed {
-            bytes: 2,
-            elements,
         };
-        
-        let enums = collect_enums(&layout);
-        
-        assert_eq!(enums.len(), 1);
-        assert_eq!(enums[0].0, "target_type");
-        assert_eq!(enums[0].1, 2);
-        assert_eq!(enums[0].2.len(), 2);
+
+        let result = generate_item(&item);
+        let code = result.to_string();
+
+        assert!(code.contains("pub struct Item010"));
+        assert!(code.contains("pub sac : u8"));
+        assert!(code.contains("pub sic : u8"));
+        assert!(code.contains("impl Decode for Item010"));
+        assert!(code.contains("impl Encode for Item010"));
     }
 }
