@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 
 use crate::transform::ir::IR;
 use super::{item_gen::generate_item, record_gen::generate_record};
@@ -22,6 +22,7 @@ use super::{item_gen::generate_item, record_gen::generate_record};
 /// A TokenStream containing the complete generated module.
 pub fn generate(ir: &IR) -> TokenStream {
     let category = &ir.category;
+    let module_name = format_ident!("cat{:03}", category.id);
     
     // Generate the record struct and its implementations
     let record = generate_record(category);
@@ -44,11 +45,14 @@ pub fn generate(ir: &IR) -> TokenStream {
         use rusterix::rcore::{BitReader, BitWriter, DecodeError, Fspec, Decode, Encode};
         use std::io::{Read, Write};
         
-        // Category record
-        #record
-        
-        // Data items
-        #(#items)*
+        pub mod #module_name {
+            use super::*;
+            // Category record
+            #record
+            
+            // Data items
+            #(#items)*
+        }
     }
 }
 
@@ -93,7 +97,7 @@ mod tests {
         assert!(code.contains("Encode"));
 
         // Check for record
-        assert!(code.contains("pub struct Cat048Record"));
+        assert!(code.contains("pub struct Record"));
 
         // Check for item
         assert!(code.contains("pub struct Item010"));

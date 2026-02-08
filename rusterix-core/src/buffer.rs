@@ -1,16 +1,26 @@
 use std::io::{Cursor, Read, Write};
 
+/// In-memory byte buffer that implements both [`Read`] and [`Write`].
+///
+/// This is a thin wrapper around [`Cursor<Vec<u8>>`] that provides a
+/// convenient, ownable buffer for use with [`BitReader`](crate::BitReader) and
+/// [`BitWriter`](crate::BitWriter).
+///
+/// Use [`into_inner`](Self::into_inner) to consume the buffer and retrieve the
+/// accumulated bytes.
 pub struct MemoryBuffer {
     inner: Cursor<Vec<u8>>,
 }
 
 impl MemoryBuffer {
+    /// Creates a new, empty buffer.
     pub fn new() -> Self {
         Self {
             inner: Cursor::new(Vec::new()),
         }
     }
 
+    /// Consumes the buffer and returns the underlying byte vector.
     pub fn into_inner(self) -> Vec<u8> {
         self.inner.into_inner()
     }

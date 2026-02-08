@@ -1,5 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{quote, format_ident};
+use syn::Ident;
 
 use crate::transform::ir::*;
 use super::{
@@ -9,6 +10,13 @@ use super::{
     enum_gen::*,
 };
 
+pub fn build_struct_name(item_id: u8) -> Ident {
+    format_ident!("Item{:03}", item_id)
+}
+
+pub fn build_field_name(item_id: u8) -> Ident {
+    format_ident!("item{:03}", item_id)
+}
 /// Generates all code for a single ASTERIX item.
 /// 
 /// This includes:
@@ -25,7 +33,7 @@ use super::{
 /// 
 /// TokenStream containing all generated code for this item.
 pub fn generate_item(item: &IRItem) -> TokenStream {
-    let item_name = format_ident!("Item{:03}", item.id);
+    let item_name = build_struct_name(item.id);
     
     // Collect all enums that need to be generated
     let enums = collect_enums(&item.layout);

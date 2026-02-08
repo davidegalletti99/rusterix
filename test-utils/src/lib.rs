@@ -57,24 +57,6 @@ pub fn load_fixture(category: &str, filename: &str) -> String {
         .unwrap_or_else(|e| panic!("Failed to read fixture {}: {}", path.display(), e))
 }
 
-/// Loads expected Rust code output for a test case.
-///
-/// # Arguments
-///
-/// * `test_name` - Name of the test (without .rs extension)
-///
-/// # Panics
-///
-/// Panics if the file cannot be read.
-pub fn load_expected_output(test_name: &str) -> String {
-    let path = testdata_dir()
-        .join("expected")
-        .join(format!("{}.rs", test_name));
-
-    fs::read_to_string(&path)
-        .unwrap_or_else(|e| panic!("Failed to read expected output {}: {}", path.display(), e))
-}
-
 /// Normalizes whitespace in code for comparison.
 ///
 /// This is useful for comparing generated code where formatting may differ

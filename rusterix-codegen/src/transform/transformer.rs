@@ -12,7 +12,7 @@ use crate::transform::ir::*;
 /// Panics if validation fails (e.g., bit counts don't match byte declarations).
 pub fn to_ir(cat: Category) -> IR {
     let ir_category = to_ir_category(cat);
-    
+
     // Validate all items
     for item in &ir_category.items {
         item.layout.validate();

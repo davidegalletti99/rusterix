@@ -67,7 +67,7 @@ let builder = RustBuilder::new();
 let code = builder.build("cat048.xml")?;
 
 // Use generated code (after including in your project)
-// let record = Cat048Record::decode(&mut reader)?;
+// let record = cat48::Record::decode(&mut reader)?;
 // record.encode(&mut buffer)?;
 ```
 

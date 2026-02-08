@@ -1,5 +1,15 @@
 use std::io::{self, Write};
 
+/// Writes individual bits to a byte-oriented [`Write`] sink.
+///
+/// Bits are accumulated MSB-first into an internal byte buffer and flushed to
+/// the underlying writer each time a full byte has been assembled.  Call
+/// [`flush`](Self::flush) after the last write to emit any remaining partial
+/// byte (padded with zero bits on the right).
+///
+/// The struct also implements [`Write`] for byte-level access, but only when
+/// the internal bit buffer is empty (i.e. [`is_byte_aligned`](Self::is_byte_aligned)
+/// returns `true`).
 #[derive(Debug)]
 pub struct BitWriter<W: Write> {
     writer: W,
@@ -8,6 +18,7 @@ pub struct BitWriter<W: Write> {
 }
 
 impl<W: Write> BitWriter<W> {
+    /// Wraps an existing writer for bit-level access.
     pub fn new(writer: W) -> Self {
         Self {
             writer,
@@ -16,6 +27,11 @@ impl<W: Write> BitWriter<W> {
         }
     }
 
+    /// Writes the lowest `count` bits of `value`, MSB-first.
+    ///
+    /// Full bytes are emitted to the underlying writer as soon as they are
+    /// complete; any remaining bits stay buffered until the next call or
+    /// until [`flush`](Self::flush) is called.
     pub fn write_bits(&mut self, value: u64, count: usize) -> io::Result<()> {
         for i in (0..count).rev() {
             let bit = ((value >> i) & 1) as u8;
@@ -31,6 +47,9 @@ impl<W: Write> BitWriter<W> {
         Ok(())
     }
 
+    /// Flushes any buffered partial byte to the underlying writer, padding the
+    /// remaining bits with zeros on the right.  Does nothing when already
+    /// byte-aligned.
     pub fn flush(&mut self) -> io::Result<()> {
         if self.bits_filled > 0 {
             self.buffer <<= 8 - self.bits_filled;

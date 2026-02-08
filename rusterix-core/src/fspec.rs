@@ -1,16 +1,40 @@
 use std::io::{self, Read, Write};
 
+/// ASTERIX Field Specification (FSPEC) bitmap.
+///
+/// An FSPEC is a variable-length sequence of bytes where each byte's LSB (the
+/// FX bit) indicates whether another FSPEC byte follows.  Bits 7..1 of each
+/// byte flag the presence of individual data items in the record.
+///
+/// This struct manages the FX bits automatically: when you [`set`](Self::set) a
+/// bit in a later byte, all preceding FX bits are enabled so the FSPEC
+/// serialises correctly.
+///
+/// ## Bit numbering
+///
+/// Within each FSPEC byte the bits are numbered 0 (MSB) through 7 (LSB):
+///
+/// ```text
+/// Bit:  0   1   2   3   4   5   6   7
+///       ^                           ^
+///       MSB (first data item)       FX (extension indicator)
+/// ```
 #[derive(Debug, Clone)]
 pub struct Fspec {
     bytes: Vec<u8>,
 }
 
 impl Fspec {
-    /// Creates a new FSPEC with a single byte initialized to 0x00.
+    /// Creates a new FSPEC with a single byte initialised to `0x00`.
+    ///
     /// ASTERIX requires at least one FSPEC byte, even for empty records.
     pub fn new() -> Self {
         Fspec { bytes: vec![0x00] }
     }
+
+    /// Reads an FSPEC from a reader.
+    ///
+    /// Bytes are consumed until one with FX = 0 (no extension) is encountered.
     pub fn read<R: Read>(reader: &mut R) -> io::Result<Self> {
         let mut bytes = Vec::new();
 
@@ -28,10 +52,14 @@ impl Fspec {
         Ok(Self { bytes })
     }
 
+    /// Writes all FSPEC bytes (including FX bits) to a writer.
     pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
         writer.write_all(&self.bytes)
     }
 
+    /// Returns `true` if the given bit is set in the FSPEC.
+    ///
+    /// Returns `false` if the given bit isn't set or if the position is beyond the current FSPEC length.
     pub fn is_set(&self, byte: usize, bit: u8) -> bool {
         self.bytes
             .get(byte)

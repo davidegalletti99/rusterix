@@ -22,7 +22,7 @@ fn builder_from_fixture() {
 
     assert!(result.is_ok());
     let code = result.unwrap();
-    assert!(code.contains("Cat001Record"));
+    assert!(code.contains("pub mod cat001"));
 }
 
 #[test]
@@ -34,7 +34,7 @@ fn builder_generates_record_struct() {
 
     cleanup_temp_files();
 
-    assert!(code.contains("pub struct Cat001Record"));
+    assert!(code.contains("pub mod cat001"));
     assert!(code.contains("pub struct Item010"));
 }
 
@@ -70,7 +70,7 @@ fn builder_build_file() {
     assert!(output_path.exists());
 
     let generated = fs::read_to_string(&output_path).unwrap();
-    assert!(generated.contains("Cat001Record"));
+    assert!(generated.contains("pub mod cat001"));
 
     // Cleanup
     fs::remove_dir_all("target/test_output").ok();

@@ -59,9 +59,7 @@ fn main() {
 
                 // Write the generated module with test helpers
                 let module_code = format!(
-                    "// AUTO-GENERATED from {} - DO NOT EDIT\n\
-                     #![allow(unused_imports)]\n\
-                     #![allow(dead_code)]\n\n\
+                    "// AUTO-GENERATED from {} - DO NOT EDIT\n\n\
                      {}\n",
                     xml_file,
                     code

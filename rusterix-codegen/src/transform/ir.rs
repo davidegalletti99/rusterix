@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 /// Intermediate Representation (IR) for ASTERIX code generation.
 /// 
 /// The IR is a normalized, validated representation of the XML input that is
@@ -100,7 +102,8 @@ pub enum IRLayout {
 
 /// A part group within an extended item.
 /// 
-/// Each part group contains elements that fit within one byte (7 bits of data + 1 FX bit).
+/// Each part group contains elements that fit within one byte 
+/// (7 bits of data + 1 FX bit).
 #[derive(Debug)]
 pub struct IRPartGroup {
     /// Zero-based index (0 = first byte, 1 = second byte, etc.)
@@ -117,13 +120,15 @@ pub struct IRSubItem {
     /// Maps to FSPEC bit: index 0 → bit 0.7, index 1 → bit 0.6, etc.
     pub index: usize,
     
-    /// The structure of this sub-item (can be Fixed/Explicit/Extended/Repetitive)
+    /// The structure of this sub-item 
+    /// (can be Fixed/Explicit/Extended/Repetitive)
     pub layout: IRLayout,
 }
 
 /// Individual elements within an item structure.
 /// 
-/// These represent the actual data fields, enumerations, and structural markers.
+/// These represent the actual data fields, enumerations, and structural 
+/// markers.
 #[derive(Debug)]
 pub enum IRElement {
     /// A simple data field.
@@ -169,7 +174,8 @@ pub enum IRElement {
 }
 
 impl IRElement {
-    /// Returns the total number of bits this element occupies in the wire format.
+    /// Returns the total number of bits this element occupies in the wire 
+    /// format.
     /// 
     /// For EPB, this includes both the validity bit and the content.
     pub fn bit_size(&self) -> usize {
@@ -197,8 +203,10 @@ impl IRLayout {
     /// Panics if validation fails (build-time error).
     pub fn validate(&self) {
         match self {
-            IRLayout::Fixed { bytes, elements } | IRLayout::Explicit { bytes, elements } => {
-                let total_bits: usize = elements.iter().map(|e| e.bit_size()).sum();
+            IRLayout::Fixed { bytes, elements } 
+            | IRLayout::Explicit { bytes, elements } => {
+                let total_bits: usize = elements.iter()
+                    .map(|e| e.bit_size()).sum();
                 let expected_bits = bytes * 8;
                 
                 assert_eq!(
@@ -211,9 +219,12 @@ impl IRLayout {
             IRLayout::Extended { bytes, part_groups } => {
                 let layout_bytes =  part_groups.len();
                 let declared_bytes = bytes.clone();
-                assert_eq!(declared_bytes, layout_bytes, "Byte count mismatch: Extended element declared {} bytes but defines {} parts = {} bytes", declared_bytes, layout_bytes, layout_bytes);
+                assert_eq!(declared_bytes, layout_bytes, 
+                    "Byte count mismatch: Extended element declared {} bytes but defines {} parts = {} bytes", 
+                    declared_bytes, layout_bytes, layout_bytes);
                 for group in part_groups {
-                    let total_bits: usize = group.elements.iter().map(|e| e.bit_size()).sum();
+                    let total_bits: usize = group.elements.iter()
+                        .map(|e| e.bit_size()).sum();
                     let expected_bits = 7;
                     
                     assert_eq!(
@@ -225,7 +236,8 @@ impl IRLayout {
             }
             
             IRLayout::Repetitive { bytes, elements, .. } => {
-                let total_bits: usize = elements.iter().map(|e| e.bit_size()).sum();
+                let total_bits: usize = elements.iter()
+                    .map(|e| e.bit_size()).sum();
                 let expected_bits = bytes * 8;
                 
                 assert_eq!(

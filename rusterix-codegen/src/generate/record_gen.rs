@@ -1,23 +1,27 @@
 use proc_macro2::TokenStream;
 use quote::{quote, format_ident};
 
-use crate::transform::ir::*;
+use crate::{generate::item_gen, transform::ir::*};
 use super::utils::frn_to_fspec_position;
 
-/// Generates the Cat{N}Record struct and its implementations.
+pub fn build_struct_name(_category_id: u8) -> proc_macro2::Ident {
+    format_ident!("Record")
+}
+
+/// Generates the data Record struct and its implementations.
 /// 
 /// The record struct contains all items as Option fields, with an FSPEC
 /// that is automatically managed during decode/encode.
 /// 
 /// # Arguments
 /// 
-/// * `category` - The category IR to generate the record for
+/// * `category` - The category IR to generate the data record for
 /// 
 /// # Returns
 /// 
 /// TokenStream containing the record struct and implementations.
 pub fn generate_record(category: &IRCategory) -> TokenStream {
-    let record_name = format_ident!("Cat{:03}Record", category.id);
+    let record_name = build_struct_name(category.id);
     
     // Generate fields: all items as Option<ItemXXX>
     let fields: Vec<_> = category.items.iter().map(|item| {
@@ -96,7 +100,7 @@ fn generate_record_decode(category: &IRCategory, record_name: &proc_macro2::Iden
 fn generate_record_encode(category: &IRCategory, record_name: &proc_macro2::Ident) -> TokenStream {
     // Generate FSPEC setup - set bits for present items
     let fspec_setup: Vec<_> = category.items.iter().map(|item| {
-        let field_name = format_ident!("item{:03}", item.id);
+        let field_name = item_gen::build_field_name(item.id);
         let (byte, bit) = frn_to_fspec_position(item.frn as usize);
         
         quote! {
@@ -108,7 +112,7 @@ fn generate_record_encode(category: &IRCategory, record_name: &proc_macro2::Iden
     
     // Generate item encoding - encode present items
     let encode_items: Vec<_> = category.items.iter().map(|item| {
-        let field_name = format_ident!("item{:03}", item.id);
+        let field_name =  item_gen::build_field_name(item.id);
         
         quote! {
             if let Some(ref item) = self.#field_name {
@@ -181,7 +185,7 @@ mod tests {
         let result = generate_record(&category);
         let code = result.to_string();
         
-        assert!(code.contains("pub struct Cat048Record"));
+        assert!(code.contains("pub struct Record"));
         assert!(code.contains("pub item010 : Option < Item010 >"));
         assert!(code.contains("pub item020 : Option < Item020 >"));
         assert!(code.contains("pub fn decode"));

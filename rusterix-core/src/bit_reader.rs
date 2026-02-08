@@ -1,5 +1,14 @@
 use std::io::{self, Read};
 
+/// Reads individual bits from a byte-oriented [`Read`] source.
+///
+/// Bits are consumed MSB-first within each byte.  New bytes are fetched from
+/// the underlying reader on demand, so the reader is never read ahead of what
+/// is needed.
+///
+/// The struct also implements [`Read`] for byte-level access, but only when
+/// the internal bit buffer is empty (i.e. [`is_byte_aligned`](Self::is_byte_aligned)
+/// returns `true`).
 #[derive(Debug)]
 pub struct BitReader<R: Read> {
     reader: R,
@@ -8,6 +17,7 @@ pub struct BitReader<R: Read> {
 }
 
 impl<R: Read> BitReader<R> {
+    /// Wraps an existing reader for bit-level access.
     pub fn new(reader: R) -> Self {
         Self {
             reader,
@@ -16,6 +26,13 @@ impl<R: Read> BitReader<R> {
         }
     }
 
+    /// Reads up to 64 bits and returns them right-aligned in a `u64`.
+    ///
+    /// Bits are read MSB-first: the first bit read becomes the most
+    /// significant bit of the returned value.
+    ///
+    /// Returns an I/O error if the underlying reader runs out of data before
+    /// `count` bits have been consumed.
     pub fn read_bits(&mut self, count: usize) -> io::Result<u64> {
         let mut value = 0u64;
 

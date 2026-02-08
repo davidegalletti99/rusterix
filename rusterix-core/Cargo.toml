@@ -2,6 +2,7 @@
 name = "rusterix-core"
 version = "0.1.0"
 edition = "2021"
+description = "Core runtime library for ASTERIX message encoding and decoding"
 
 [dependencies]
 

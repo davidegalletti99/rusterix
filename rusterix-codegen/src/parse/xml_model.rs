@@ -5,6 +5,8 @@ use serde::Deserialize;
 //
 
 /// Represents an ASTERIX category definition.
+/// At this level, the "category" name defines the structure of a single ASTERIX 
+/// data record, not a full data block.
 #[derive(Debug, Deserialize)]
 pub struct Category {
     #[serde(rename = "@id")]

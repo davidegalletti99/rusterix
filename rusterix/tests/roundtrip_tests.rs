@@ -22,7 +22,7 @@ use std::io::Cursor;
 
 #[test]
 fn roundtrip_simple_fixed_zeros() {
-    use simple_fixed::*;
+    use simple_fixed::cat001::*;
 
     let original = Item010 { sac: 0, sic: 0 };
 
@@ -41,7 +41,7 @@ fn roundtrip_simple_fixed_zeros() {
 
 #[test]
 fn roundtrip_simple_fixed_max_values() {
-    use simple_fixed::*;
+    use simple_fixed::cat001::*;
 
     let original = Item010 { sac: 255, sic: 255 };
 
@@ -60,7 +60,7 @@ fn roundtrip_simple_fixed_max_values() {
 
 #[test]
 fn roundtrip_simple_fixed_typical() {
-    use simple_fixed::*;
+    use simple_fixed::cat001::*;
 
     let original = Item010 { sac: 42, sic: 128 };
 
@@ -79,7 +79,7 @@ fn roundtrip_simple_fixed_typical() {
 
 #[test]
 fn roundtrip_simple_fixed_bytes() {
-    use simple_fixed::*;
+    use simple_fixed::cat001::*;
 
     // Known byte sequence: sac=42 (0x2A), sic=128 (0x80)
     let bytes = [0x2A, 0x80];
@@ -107,9 +107,9 @@ fn roundtrip_simple_fixed_bytes() {
 
 #[test]
 fn roundtrip_record_all_items() {
-    use multi_item_record::*;
+    use multi_item_record::cat048::*;
 
-    let original = Cat048Record {
+    let original = Record {
         item010: Some(Item010 { sac: 42, sic: 128 }),
         item020: Some(Item020 { typ: 99 }),
     };
@@ -118,16 +118,16 @@ fn roundtrip_record_all_items() {
     original.encode(&mut buffer).unwrap();
 
     let mut reader = Cursor::new(&buffer);
-    let decoded = Cat048Record::decode(&mut reader).unwrap();
+    let decoded = Record::decode(&mut reader).unwrap();
 
     assert_eq!(original, decoded);
 }
 
 #[test]
 fn roundtrip_record_partial_items() {
-    use multi_item_record::*;
+    use multi_item_record::cat048::*;
 
-    let original = Cat048Record {
+    let original = Record {
         item010: Some(Item010 { sac: 1, sic: 2 }),
         item020: None,
     };
@@ -136,16 +136,16 @@ fn roundtrip_record_partial_items() {
     original.encode(&mut buffer).unwrap();
 
     let mut reader = Cursor::new(&buffer);
-    let decoded = Cat048Record::decode(&mut reader).unwrap();
+    let decoded = Record::decode(&mut reader).unwrap();
 
     assert_eq!(original, decoded);
 }
 
 #[test]
 fn roundtrip_record_empty() {
-    use multi_item_record::*;
+    use multi_item_record::cat048::*;
 
-    let original = Cat048Record {
+    let original = Record {
         item010: None,
         item020: None,
     };
@@ -154,7 +154,7 @@ fn roundtrip_record_empty() {
     original.encode(&mut buffer).unwrap();
 
     let mut reader = Cursor::new(&buffer);
-    let decoded = Cat048Record::decode(&mut reader).unwrap();
+    let decoded = Record::decode(&mut reader).unwrap();
 
     assert_eq!(original, decoded);
 }
@@ -165,7 +165,7 @@ fn roundtrip_record_empty() {
 
 #[test]
 fn roundtrip_enum_known_values() {
-    use enum_basic::*;
+    use enum_basic::cat001::*;
 
     // Test with known enum values
     let original = Item010 {
@@ -187,7 +187,7 @@ fn roundtrip_enum_known_values() {
 
 #[test]
 fn roundtrip_enum_all_variants() {
-    use enum_basic::*;
+    use enum_basic::cat001::*;
 
     for variant in [TargetType::Psr, TargetType::Ssr] {
         let original = Item010 {
@@ -214,7 +214,7 @@ fn roundtrip_enum_all_variants() {
 
 #[test]
 fn roundtrip_extended_single_part() {
-    use extended_multi_part::*;
+    use extended_multi_part::cat048::*;
 
     // Test with only the first part present
     // Part0 has fields: a (3 bits), b (4 bits)
@@ -238,7 +238,7 @@ fn roundtrip_extended_single_part() {
 
 #[test]
 fn roundtrip_extended_two_parts() {
-    use extended_multi_part::*;
+    use extended_multi_part::cat048::*;
 
     // Test with both parts present
     // Part0: a (3 bits), b (4 bits)
@@ -267,7 +267,7 @@ fn roundtrip_extended_two_parts() {
 
 #[test]
 fn roundtrip_compound_all_subitems() {
-    use compound_simple::*;
+    use compound_simple::cat001::*;
 
     let original = Item100 {
         sub0: Some(Item100Sub0 { flags: 10 }),
@@ -289,7 +289,7 @@ fn roundtrip_compound_all_subitems() {
 
 #[test]
 fn roundtrip_compound_partial_subitems() {
-    use compound_simple::*;
+    use compound_simple::cat001::*;
 
     let original = Item100 {
         sub0: Some(Item100Sub0 { flags: 10 }),
@@ -315,7 +315,7 @@ fn roundtrip_compound_partial_subitems() {
 
 #[test]
 fn roundtrip_repetitive_basic() {
-    use repetitive_basic::*;
+    use repetitive_basic::cat001::*;
 
     // The repetitive_basic.xml fixture has counter="5", meaning exactly 5 elements
     let original = Item070 {
@@ -343,7 +343,7 @@ fn roundtrip_repetitive_basic() {
 
 #[test]
 fn roundtrip_repetitive_boundary_values() {
-    use repetitive_basic::*;
+    use repetitive_basic::cat001::*;
 
     // Test with boundary values for 16-bit azimuth field
     let original = Item070 {
@@ -375,7 +375,7 @@ fn roundtrip_repetitive_boundary_values() {
 
 #[test]
 fn roundtrip_epb_present() {
-    use epb_field::*;
+    use epb_field::cat001::*;
 
     let original = Item010 {
         optional_value: Some(12345),
@@ -396,7 +396,7 @@ fn roundtrip_epb_present() {
 
 #[test]
 fn roundtrip_epb_absent() {
-    use epb_field::*;
+    use epb_field::cat001::*;
 
     let original = Item010 {
         optional_value: None,
@@ -421,7 +421,7 @@ fn roundtrip_epb_absent() {
 
 #[test]
 fn roundtrip_spare_bits() {
-    use spare_bits::*;
+    use spare_bits::cat001::*;
 
     let original = Item010 { data: 42 };
 
@@ -444,7 +444,7 @@ fn roundtrip_spare_bits() {
 
 #[test]
 fn roundtrip_explicit_item() {
-    use explicit_item::*;
+    use explicit_item::cat001::*;
 
     let original = Item060 {
         altitude: 1000,
@@ -470,7 +470,7 @@ fn roundtrip_explicit_item() {
 
 #[test]
 fn roundtrip_boundary_values() {
-    use simple_fixed::*;
+    use simple_fixed::cat001::*;
 
     for &value in &[0u8, 1, 127, 128, 254, 255] {
         let original = Item010 { sac: value, sic: value };

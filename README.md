@@ -72,11 +72,11 @@ use rusterix::{BitReader, BitWriter, Decode, Encode, DecodeError};
 use std::io::Cursor;
 
 mod generated;
-use generated::cat048::{Cat048Record, Item010, Item140};
+use generated::cat048::{Record, Item010, Item140};
 
 fn main() -> Result<(), DecodeError> {
     // Create a record
-    let record = Cat048Record {
+    let record = Record {
         item010: Some(Item010 { sac: 42, sic: 128 }),
         item140: Some(Item140 { time_of_day: 0x123456 }),
     };
@@ -87,7 +87,7 @@ fn main() -> Result<(), DecodeError> {
 
     // Decode from bytes
     let mut reader = Cursor::new(&buffer);
-    let decoded = Cat048Record::decode(&mut reader)?;
+    let decoded = Record::decode(&mut reader)?;
 
     assert_eq!(record, decoded);
     Ok(())
@@ -229,7 +229,7 @@ Rusterix generates:
 
 ```rust
 #[derive(Debug, Clone, PartialEq)]
-pub struct Cat048Record {
+pub struct Record {
     pub item010: Option<Item010>,
     pub item020: Option<Item020>,
 }
