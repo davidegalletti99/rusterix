@@ -1,7 +1,7 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 
-use crate::lower::{FieldDescriptor, FieldType, LoweredPart, LoweredSubItem, LoweredSubItemKind};
+use crate::transform::lower_ir::{FieldDescriptor, FieldType, LoweredPart, LoweredSubItem, LoweredSubItemKind};
 
 /// Generates a struct field declaration from a pre-resolved field descriptor.
 fn generate_field(field: &FieldDescriptor) -> TokenStream {

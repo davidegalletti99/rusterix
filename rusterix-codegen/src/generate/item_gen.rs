@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::lower::{LoweredItem, LoweredItemKind};
+use crate::transform::lower_ir::{LoweredItem, LoweredItemKind};
 use super::{
     struct_gen::*,
     decode_gen::*,
@@ -86,7 +86,7 @@ pub fn generate_item(item: &LoweredItem) -> TokenStream {
 mod tests {
     use super::*;
     use quote::format_ident;
-    use crate::lower::*;
+    use crate::transform::lower_ir::*;
 
     #[test]
     fn test_generate_simple_item() {

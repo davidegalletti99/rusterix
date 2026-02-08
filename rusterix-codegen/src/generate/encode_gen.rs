@@ -1,7 +1,7 @@
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 
-use crate::lower::{EncodeOp, LoweredPart, LoweredSubItem, LoweredSubItemKind};
+use crate::transform::lower_ir::{EncodeOp, LoweredPart, LoweredSubItem, LoweredSubItemKind};
 
 /// Emits a single encode operation as a TokenStream.
 fn emit_encode_op(op: &EncodeOp) -> TokenStream {

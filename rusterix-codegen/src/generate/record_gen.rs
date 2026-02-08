@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::lower::LoweredRecord;
+use crate::transform::lower_ir::LoweredRecord;
 
 /// Generates the data Record struct and its implementations.
 ///
@@ -142,7 +142,7 @@ fn generate_record_encode(record: &LoweredRecord) -> TokenStream {
 mod tests {
     use super::*;
     use quote::format_ident;
-    use crate::lower::RecordEntry;
+    use crate::transform::lower_ir::RecordEntry;
 
     #[test]
     fn test_generate_record() {

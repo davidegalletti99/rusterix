@@ -1,8 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::lower::{self, LoweredIR};
-use crate::transform::ir::IR;
+use crate::transform::{lowerer, ir::IR, lower_ir::LoweredIR};
 use super::{item_gen::generate_item, record_gen::generate_record};
 
 /// Main code generation orchestrator.
@@ -23,7 +22,7 @@ use super::{item_gen::generate_item, record_gen::generate_record};
 ///
 /// A TokenStream containing the complete generated module.
 pub fn generate(ir: &IR) -> TokenStream {
-    let lowered = lower::lower(ir);
+    let lowered = lowerer::lower(ir);
     generate_from_lowered(&lowered)
 }
 

@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::lower::LoweredEnum;
+use crate::transform::lower_ir::LoweredEnum;
 
 /// Generates a Rust enum from a pre-lowered enum definition.
 ///
@@ -65,7 +65,7 @@ pub fn generate_enum(lowered: &LoweredEnum) -> TokenStream {
 mod tests {
     use super::*;
     use quote::format_ident;
-    use crate::lower::LoweredEnumVariant;
+    use crate::transform::lower_ir::LoweredEnumVariant;
 
     #[test]
     fn test_generate_enum() {
