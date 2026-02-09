@@ -1,55 +1,61 @@
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 
-use crate::transform::ir::IR;
-use super::{item_gen::generate_item, record_gen::generate_record};
+use crate::transform::{lowerer, ir::IR, lower_ir::LoweredIR};
+use super::{item_gen::generate_item, record_gen::generate_record, datablock_gen::generate_datablock};
 
 /// Main code generation orchestrator.
-/// 
-/// Produces a complete Rust module containing:
+///
+/// Lowers the semantic IR into a flat representation, then produces
+/// a complete Rust module containing:
 /// - All necessary imports
 /// - Category record struct (Cat{N}Record)
 /// - All item structs (Item{N})
 /// - All enum definitions
 /// - All decode/encode implementations
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `ir` - The validated intermediate representation
-/// 
+///
 /// # Returns
-/// 
+///
 /// A TokenStream containing the complete generated module.
 pub fn generate(ir: &IR) -> TokenStream {
-    let category = &ir.category;
-    let module_name = format_ident!("cat{:03}", category.id);
-    
-    // Generate the record struct and its implementations
-    let record = generate_record(category);
-    
-    // Generate all item structs and their implementations
-    let items: Vec<_> = category.items.iter()
+    let lowered = lowerer::lower(ir);
+    generate_from_lowered(&lowered)
+}
+
+fn generate_from_lowered(lowered: &LoweredIR) -> TokenStream {
+    let module_name = &lowered.module_name;
+
+    let record = generate_record(&lowered.record);
+    let datablock = generate_datablock(lowered);
+
+    let items: Vec<_> = lowered.items.iter()
         .map(generate_item)
         .collect();
-    
-    // Combine everything into a complete module
+
     quote! {
         // AUTO-GENERATED CODE — DO NOT EDIT
         //
         // This file was automatically generated from ASTERIX XML definitions.
         // Manual modifications will be lost on regeneration.
-        
+
         #![allow(unused_imports)]
         #![allow(dead_code)]
 
         use rusterix::rcore::{BitReader, BitWriter, DecodeError, Fspec, Decode, Encode};
         use std::io::{Read, Write};
-        
+
         pub mod #module_name {
             use super::*;
             // Category record
             #record
-            
+
+            // Data block
+            #datablock
+
             // Data items
             #(#items)*
         }
@@ -60,7 +66,7 @@ pub fn generate(ir: &IR) -> TokenStream {
 mod tests {
     use super::*;
     use crate::transform::ir::*;
-    
+
     #[test]
     fn test_generate_complete_module() {
         let ir = IR {
@@ -76,10 +82,12 @@ mod tests {
                                 IRElement::Field {
                                     name: "sac".to_string(),
                                     bits: 8,
+                                    is_string: false,
                                 },
                                 IRElement::Field {
                                     name: "sic".to_string(),
                                     bits: 8,
+                                    is_string: false,
                                 },
                             ],
                         },
@@ -87,10 +95,10 @@ mod tests {
                 ],
             },
         };
-        
+
         let result = generate(&ir);
         let code = result.to_string();
-        
+
         // Check for imports (quote! adds spaces around :: and braces)
         assert!(code.contains("use rusterix :: rcore"));
         assert!(code.contains("Decode"));
@@ -98,6 +106,11 @@ mod tests {
 
         // Check for record
         assert!(code.contains("pub struct Record"));
+
+        // Check for data block
+        assert!(code.contains("pub struct DataBlock"));
+        assert!(code.contains("impl Encode for DataBlock"));
+        assert!(code.contains("impl Decode for DataBlock"));
 
         // Check for item
         assert!(code.contains("pub struct Item010"));

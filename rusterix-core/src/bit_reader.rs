@@ -52,6 +52,20 @@ impl<R: Read> BitReader<R> {
         Ok(value)
     }
 
+    /// Reads a fixed-length string field from the stream.
+    ///
+    /// Reads `byte_len` bytes, interprets them as ASCII/UTF-8, and trims
+    /// trailing spaces and null bytes. This is used for ASTERIX string fields
+    /// such as callsigns and target identifications.
+    pub fn read_string(&mut self, byte_len: usize) -> io::Result<String> {
+        let mut bytes = vec![0u8; byte_len];
+        for byte in bytes.iter_mut() {
+            *byte = self.read_bits(8)? as u8;
+        }
+        let s = String::from_utf8_lossy(&bytes);
+        Ok(s.trim_end_matches(|c: char| c == ' ' || c == '\0').to_string())
+    }
+
     /// Returns true if the reader is at a byte boundary (no partial byte buffered).
     pub fn is_byte_aligned(&self) -> bool {
         self.bits_left == 0
@@ -179,6 +193,34 @@ mod tests {
         let mut buf = [0u8; 2];
         reader.read_exact(&mut buf).unwrap();
         assert_eq!(buf, [0xCD, 0xEF]);
+    }
+
+    #[test]
+    fn read_string_basic() {
+        // "ABC" as bytes, followed by spaces
+        let data = vec![0x41, 0x42, 0x43, 0x20, 0x20];
+        let mut reader = BitReader::new(Cursor::new(data));
+
+        let s = reader.read_string(5).unwrap();
+        assert_eq!(s, "ABC");
+    }
+
+    #[test]
+    fn read_string_no_padding() {
+        let data = vec![0x41, 0x42, 0x43]; // "ABC"
+        let mut reader = BitReader::new(Cursor::new(data));
+
+        let s = reader.read_string(3).unwrap();
+        assert_eq!(s, "ABC");
+    }
+
+    #[test]
+    fn read_string_with_null_padding() {
+        let data = vec![0x41, 0x42, 0x00, 0x00]; // "AB\0\0"
+        let mut reader = BitReader::new(Cursor::new(data));
+
+        let s = reader.read_string(4).unwrap();
+        assert_eq!(s, "AB");
     }
 
     #[test]

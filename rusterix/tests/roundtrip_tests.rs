@@ -112,12 +112,17 @@ fn roundtrip_record_all_items() {
     let original = Record {
         item010: Some(Item010 { sac: 42, sic: 128 }),
         item020: Some(Item020 { typ: 99 }),
+        item240: Some(Item240 { aircraft_id: "TEST".to_string() }),
     };
 
     let mut buffer = Vec::new();
-    original.encode(&mut buffer).unwrap();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
 
-    let mut reader = Cursor::new(&buffer);
+    let mut reader = BitReader::new(Cursor::new(&buffer));
     let decoded = Record::decode(&mut reader).unwrap();
 
     assert_eq!(original, decoded);
@@ -130,12 +135,17 @@ fn roundtrip_record_partial_items() {
     let original = Record {
         item010: Some(Item010 { sac: 1, sic: 2 }),
         item020: None,
+        item240: None,
     };
 
     let mut buffer = Vec::new();
-    original.encode(&mut buffer).unwrap();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
 
-    let mut reader = Cursor::new(&buffer);
+    let mut reader = BitReader::new(Cursor::new(&buffer));
     let decoded = Record::decode(&mut reader).unwrap();
 
     assert_eq!(original, decoded);
@@ -148,12 +158,135 @@ fn roundtrip_record_empty() {
     let original = Record {
         item010: None,
         item020: None,
+        item240: None,
     };
 
     let mut buffer = Vec::new();
-    original.encode(&mut buffer).unwrap();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
 
-    let mut reader = Cursor::new(&buffer);
+    let mut reader = BitReader::new(Cursor::new(&buffer));
+    let decoded = Record::decode(&mut reader).unwrap();
+
+    assert_eq!(original, decoded);
+}
+
+// ============================================================================
+// String Field Roundtrip Tests
+// ============================================================================
+
+#[test]
+fn roundtrip_string_field_exact_length() {
+    use multi_item_record::cat048::*;
+
+    // 6-byte field with exactly 6 characters
+    let original = Item240 { aircraft_id: "ABCDEF".to_string() };
+
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    let mut reader = BitReader::new(Cursor::new(&buffer));
+    let decoded = Item240::decode(&mut reader).unwrap();
+
+    assert_eq!(original, decoded);
+}
+
+#[test]
+fn roundtrip_string_field_shorter_than_field() {
+    use multi_item_record::cat048::*;
+
+    // 6-byte field with only 3 characters — should be space-padded on wire
+    let original = Item240 { aircraft_id: "ABC".to_string() };
+
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    // Verify wire format: 'A' 'B' 'C' ' ' ' ' ' '
+    assert_eq!(buffer.len(), 6);
+    assert_eq!(buffer, vec![0x41, 0x42, 0x43, 0x20, 0x20, 0x20]);
+
+    let mut reader = BitReader::new(Cursor::new(&buffer));
+    let decoded = Item240::decode(&mut reader).unwrap();
+
+    assert_eq!(decoded, original);
+}
+
+#[test]
+fn roundtrip_string_field_empty() {
+    use multi_item_record::cat048::*;
+
+    // Empty string — all spaces on wire
+    let original = Item240 { aircraft_id: "".to_string() };
+
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    // Should be 6 space bytes
+    assert_eq!(buffer, vec![0x20, 0x20, 0x20, 0x20, 0x20, 0x20]);
+
+    let mut reader = BitReader::new(Cursor::new(&buffer));
+    let decoded = Item240::decode(&mut reader).unwrap();
+
+    assert_eq!(decoded, original);
+}
+
+#[test]
+fn roundtrip_string_field_known_bytes() {
+    use multi_item_record::cat048::*;
+
+    // Decode from known byte sequence: "BAW123" (British Airways callsign)
+    let bytes = [0x42, 0x41, 0x57, 0x31, 0x32, 0x33]; // "BAW123"
+
+    let mut reader = BitReader::new(Cursor::new(&bytes));
+    let item = Item240::decode(&mut reader).unwrap();
+
+    assert_eq!(item.aircraft_id, "BAW123");
+
+    // Re-encode and verify exact bytes
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        item.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    assert_eq!(&bytes[..], &buffer[..]);
+}
+
+#[test]
+fn roundtrip_string_field_in_record() {
+    use multi_item_record::cat048::*;
+
+    // String field only in record (other items absent)
+    let original = Record {
+        item010: None,
+        item020: None,
+        item240: Some(Item240 { aircraft_id: "DLH42".to_string() }),
+    };
+
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    let mut reader = BitReader::new(Cursor::new(&buffer));
     let decoded = Record::decode(&mut reader).unwrap();
 
     assert_eq!(original, decoded);
@@ -487,4 +620,128 @@ fn roundtrip_boundary_values() {
 
         assert_eq!(original, decoded, "Failed for value {}", value);
     }
+}
+
+// ============================================================================
+// DataBlock Roundtrip Tests
+// ============================================================================
+
+#[test]
+fn roundtrip_datablock_empty() {
+    use multi_item_record::cat048::*;
+
+    let original = DataBlock::new();
+
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    // CAT=48, LEN=3 (0x00 0x03)
+    assert_eq!(buffer, vec![48, 0x00, 0x03]);
+
+    let mut reader = BitReader::new(Cursor::new(&buffer));
+    let decoded = DataBlock::decode(&mut reader).unwrap();
+
+    assert_eq!(original, decoded);
+}
+
+#[test]
+fn roundtrip_datablock_single_record() {
+    use multi_item_record::cat048::*;
+
+    let original = DataBlock::with_records(vec![
+        Record {
+            item010: Some(Item010 { sac: 42, sic: 128 }),
+            item020: None,
+            item240: None,
+        },
+    ]);
+
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    // Verify header: CAT=48, LEN > 3
+    assert_eq!(buffer[0], 48);
+    let len = u16::from_be_bytes([buffer[1], buffer[2]]);
+    assert_eq!(len as usize, buffer.len());
+
+    let mut reader = BitReader::new(Cursor::new(&buffer));
+    let decoded = DataBlock::decode(&mut reader).unwrap();
+
+    assert_eq!(original, decoded);
+}
+
+#[test]
+fn roundtrip_datablock_multiple_records() {
+    use multi_item_record::cat048::*;
+
+    let original = DataBlock::with_records(vec![
+        Record {
+            item010: Some(Item010 { sac: 1, sic: 2 }),
+            item020: Some(Item020 { typ: 10 }),
+            item240: Some(Item240 { aircraft_id: "BAW123".to_string() }),
+        },
+        Record {
+            item010: Some(Item010 { sac: 3, sic: 4 }),
+            item020: None,
+            item240: None,
+        },
+        Record {
+            item010: None,
+            item020: None,
+            item240: Some(Item240 { aircraft_id: "DLH42".to_string() }),
+        },
+    ]);
+
+    let mut buffer = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        original.encode(&mut writer).unwrap();
+        writer.flush().unwrap();
+    }
+
+    // Verify header
+    assert_eq!(buffer[0], 48);
+    let len = u16::from_be_bytes([buffer[1], buffer[2]]);
+    assert_eq!(len as usize, buffer.len());
+
+    let mut reader = BitReader::new(Cursor::new(&buffer));
+    let decoded = DataBlock::decode(&mut reader).unwrap();
+
+    assert_eq!(original, decoded);
+}
+
+#[test]
+fn datablock_category_constant() {
+    use multi_item_record::cat048::*;
+    assert_eq!(DataBlock::CATEGORY, 48);
+}
+
+#[test]
+fn datablock_decode_wrong_category() {
+    use multi_item_record::cat048::*;
+
+    // Manually craft a data block with wrong category (1 instead of 48)
+    let data = vec![1, 0x00, 0x03];
+    let mut reader = BitReader::new(Cursor::new(&data));
+    let result = DataBlock::decode(&mut reader);
+    assert!(result.is_err());
+}
+
+#[test]
+fn datablock_decode_length_too_small() {
+    use multi_item_record::cat048::*;
+
+    // LEN=2 is invalid (minimum is 3)
+    let data = vec![48, 0x00, 0x02];
+    let mut reader = BitReader::new(Cursor::new(&data));
+    let result = DataBlock::decode(&mut reader);
+    assert!(result.is_err());
 }

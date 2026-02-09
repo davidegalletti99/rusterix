@@ -137,20 +137,33 @@ fn to_ir_compoundable_item(item: CompoundableItem) -> IRLayout {
         }
     }
 }
-
+fn check_field_string_type(field: &Field) -> bool {
+    match field.field_type.as_str() {
+        "string" => true,
+        "numeric" => false,
+        _ => panic!("Invalid field type: {}", field.field_type),
+    }
+}
 /// Transforms a single element from XML model to IR.
 fn to_ir_element(element: Element) -> IRElement {
     match element {
-        Element::Field(field) => IRElement::Field {
-            name: field.name,
-            bits: field.bits,
+        Element::Field(field) => {
+            let is_string = check_field_string_type(&field);
+            IRElement::Field {
+                name: field.name,
+                bits: field.bits,
+                is_string: is_string,
+            }
         },
-        
         Element::EPB(epb) => {
             let content = match epb.content {
-                EPBContent::Field(field) => IRElement::Field {
-                    name: field.name,
-                    bits: field.bits,
+                EPBContent::Field(field) => {
+                    let is_string = check_field_string_type(&field);
+                    IRElement::Field {
+                        name: field.name,
+                        bits: field.bits,
+                        is_string: is_string,
+                    }
                 },
                 EPBContent::Enum(enum_def) => to_ir_enum(enum_def),
             };
@@ -200,6 +213,7 @@ mod tests {
                 Element::Field(Field {
                     name: "test".into(),
                     bits: 8, // Only 8 bits, but declared 2 bytes (16 bits)
+                    field_type: "numeric".into()
                 }),
             ],
         };
@@ -219,10 +233,12 @@ mod tests {
                 Element::Field(Field {
                     name: "a".into(),
                     bits: 8,
+                    field_type: "numeric".into()
                 }),
                 Element::Field(Field {
                     name: "b".into(),
                     bits: 8,
+                    field_type: "string".into()
                 }),
             ],
         };

@@ -12,4 +12,9 @@
             <field name="typ" bits="8"/>
         </fixed>
     </item>
+    <item id="240" frn="3">
+        <fixed bytes="6">
+            <field name="aircraft_id" bits="48" string_type="true"/>
+        </fixed>
+    </item>
 </category>

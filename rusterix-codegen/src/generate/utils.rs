@@ -2,31 +2,33 @@ use proc_macro2::Ident;
 use quote::format_ident;
 
 /// Maps a bit count to the appropriate Rust unsigned integer type.
-/// 
+///
+/// String fields are handled separately via `FieldType::FixedString` in the
+/// lowered IR and do not go through this function.
+///
 /// # Arguments
-/// 
+///
 /// * `bits` - Number of bits needed
-/// 
+///
 /// # Returns
-/// 
+///
 /// The smallest unsigned integer type that can hold the specified number of bits.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```
-/// use quote::format_ident;
 /// use rusterix_codegen::generate::utils::rust_type_for_bits;
 /// assert_eq!(rust_type_for_bits(3), "u8");
 /// assert_eq!(rust_type_for_bits(12), "u16");
 /// assert_eq!(rust_type_for_bits(24), "u32");
 /// ```
-pub fn rust_type_for_bits(bits: usize) -> &'static str {
+pub fn rust_type_for_bits(bits: usize) -> String {
     match bits {
-        0..=8 => "u8",
-        9..=16 => "u16",
-        17..=32 => "u32",
-        33..=64 => "u64",
-        _ => "u128"
+        0..=8 => "u8".to_string(),
+        9..=16 => "u16".to_string(),
+        17..=32 => "u32".to_string(),
+        33..=64 => "u64".to_string(),
+        _ => "u128".to_string()
     }
 }
 
@@ -178,7 +180,7 @@ mod tests {
         assert_eq!(rust_type_for_bits(64), "u64");
         assert_eq!(rust_type_for_bits(65), "u128");
     }
-    
+
     #[test]
     fn test_frn_to_fspec_position() {
         // FRN 0-6 map to byte 0, bits 0-6 (Fspec computes 1 << (7-bit))

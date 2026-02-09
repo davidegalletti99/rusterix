@@ -60,6 +60,20 @@ impl<W: Write> BitWriter<W> {
         Ok(())
     }
 
+    /// Writes a fixed-length string field to the stream.
+    ///
+    /// Writes exactly `byte_len` bytes: the bytes of `s` followed by space
+    /// padding if `s` is shorter than `byte_len`. If `s` is longer, it is
+    /// truncated. This is used for ASTERIX string fields such as callsigns.
+    pub fn write_string(&mut self, s: &str, byte_len: usize) -> io::Result<()> {
+        let bytes = s.as_bytes();
+        for i in 0..byte_len {
+            let byte = if i < bytes.len() { bytes[i] } else { b' ' };
+            self.write_bits(byte as u64, 8)?;
+        }
+        Ok(())
+    }
+
     /// Returns true if the writer is at a byte boundary (no partial byte buffered).
     pub fn is_byte_aligned(&self) -> bool {
         self.bits_filled == 0
@@ -263,6 +277,49 @@ mod tests {
         assert_eq!(reader.read_bits(16).unwrap(), 0xABCD);
         assert_eq!(reader.read_bits(3).unwrap(), 0b101);
         assert_eq!(reader.read_bits(5).unwrap(), 0b11111);
+    }
+
+    #[test]
+    fn write_string_basic() {
+        let mut buffer = Vec::new();
+        let mut writer = BitWriter::new(&mut buffer);
+
+        writer.write_string("ABC", 5).unwrap();
+        assert_eq!(buffer, vec![0x41, 0x42, 0x43, 0x20, 0x20]);
+    }
+
+    #[test]
+    fn write_string_exact_length() {
+        let mut buffer = Vec::new();
+        let mut writer = BitWriter::new(&mut buffer);
+
+        writer.write_string("AB", 2).unwrap();
+        assert_eq!(buffer, vec![0x41, 0x42]);
+    }
+
+    #[test]
+    fn write_string_truncated() {
+        let mut buffer = Vec::new();
+        let mut writer = BitWriter::new(&mut buffer);
+
+        writer.write_string("ABCDE", 3).unwrap();
+        assert_eq!(buffer, vec![0x41, 0x42, 0x43]);
+    }
+
+    #[test]
+    fn round_trip_string() {
+        use crate::bit_reader::BitReader;
+        use std::io::Cursor;
+
+        let mut buffer = Vec::new();
+        {
+            let mut writer = BitWriter::new(&mut buffer);
+            writer.write_string("TEST", 8).unwrap();
+        }
+
+        let mut reader = BitReader::new(Cursor::new(&buffer));
+        let s = reader.read_string(8).unwrap();
+        assert_eq!(s, "TEST");
     }
 
     #[test]
