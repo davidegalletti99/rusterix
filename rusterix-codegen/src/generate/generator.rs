@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::transform::{lowerer, ir::IR, lower_ir::LoweredIR};
-use super::{item_gen::generate_item, record_gen::generate_record};
+use super::{item_gen::generate_item, record_gen::generate_record, datablock_gen::generate_datablock};
 
 /// Main code generation orchestrator.
 ///
@@ -30,6 +30,7 @@ fn generate_from_lowered(lowered: &LoweredIR) -> TokenStream {
     let module_name = &lowered.module_name;
 
     let record = generate_record(&lowered.record);
+    let datablock = generate_datablock(lowered);
 
     let items: Vec<_> = lowered.items.iter()
         .map(generate_item)
@@ -51,6 +52,9 @@ fn generate_from_lowered(lowered: &LoweredIR) -> TokenStream {
             use super::*;
             // Category record
             #record
+
+            // Data block
+            #datablock
 
             // Data items
             #(#items)*
@@ -102,6 +106,11 @@ mod tests {
 
         // Check for record
         assert!(code.contains("pub struct Record"));
+
+        // Check for data block
+        assert!(code.contains("pub struct DataBlock"));
+        assert!(code.contains("impl Encode for DataBlock"));
+        assert!(code.contains("impl Decode for DataBlock"));
 
         // Check for item
         assert!(code.contains("pub struct Item010"));

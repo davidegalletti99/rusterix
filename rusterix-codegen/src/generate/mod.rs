@@ -14,6 +14,7 @@
 /// 
 pub mod generator;
 pub mod record_gen;
+pub mod datablock_gen;
 pub mod item_gen;
 pub mod struct_gen;
 pub mod decode_gen;

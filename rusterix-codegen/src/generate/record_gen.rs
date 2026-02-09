@@ -47,7 +47,7 @@ fn generate_record_decode(record: &LoweredRecord) -> TokenStream {
 
         quote! {
             #field_name: if fspec.is_set(#byte, #bit) {
-                Some(#item_type::decode(&mut bit_reader)?)
+                Some(#item_type::decode(reader)?)
             } else {
                 None
             }
@@ -55,22 +55,11 @@ fn generate_record_decode(record: &LoweredRecord) -> TokenStream {
     }).collect();
 
     quote! {
-        impl #record_name {
-            /// Decodes a record from a binary stream.
-            ///
-            /// Reads the FSPEC to determine which items are present, then
-            /// decodes only the present items.
-            ///
-            /// # Arguments
-            ///
-            /// * `reader` - The input stream to read from
-            ///
-            /// # Errors
-            ///
-            /// Returns an error if reading or parsing fails.
-            pub fn decode<R: std::io::Read>(reader: &mut R) -> Result<Self, DecodeError> {
+        impl Decode for #record_name {
+            fn decode<R: std::io::Read>(
+                reader: &mut BitReader<R>,
+            ) -> Result<Self, DecodeError> {
                 let fspec = Fspec::read(reader)?;
-                let mut bit_reader = BitReader::new(reader);
 
                 Ok(Self {
                     #(#decode_fields),*
@@ -100,38 +89,21 @@ fn generate_record_encode(record: &LoweredRecord) -> TokenStream {
 
         quote! {
             if let Some(ref item) = self.#field_name {
-                item.encode(&mut bit_writer)?;
+                item.encode(writer)?;
             }
         }
     }).collect();
 
     quote! {
-        impl #record_name {
-            /// Encodes a record to a binary stream.
-            ///
-            /// Automatically constructs the FSPEC based on which items are present,
-            /// then encodes all present items.
-            ///
-            /// # Arguments
-            ///
-            /// * `writer` - The output stream to write to
-            ///
-            /// # Errors
-            ///
-            /// Returns an error if writing fails.
-            pub fn encode<W: std::io::Write>(&self, writer: &mut W) -> Result<(), DecodeError> {
-                // Build FSPEC based on present items
+        impl Encode for #record_name {
+            fn encode<W: std::io::Write>(
+                &self,
+                writer: &mut BitWriter<W>,
+            ) -> Result<(), DecodeError> {
                 let mut fspec = Fspec::new();
                 #(#fspec_setup)*
-
-                // Write FSPEC
                 fspec.write(writer)?;
-
-                // Write items
-                let mut bit_writer = BitWriter::new(writer);
                 #(#encode_items)*
-
-                bit_writer.flush()?;
                 Ok(())
             }
         }
@@ -170,7 +142,7 @@ mod tests {
         assert!(code.contains("pub struct Record"));
         assert!(code.contains("pub item010 : Option < Item010 >"));
         assert!(code.contains("pub item020 : Option < Item020 >"));
-        assert!(code.contains("pub fn decode"));
-        assert!(code.contains("pub fn encode"));
+        assert!(code.contains("impl Decode for Record"));
+        assert!(code.contains("impl Encode for Record"));
     }
 }
