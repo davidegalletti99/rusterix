@@ -7,6 +7,7 @@ ASTERIX is the standard data format used in air traffic control systems for exch
 ## Features
 
 - **Code Generation**: Generate type-safe Rust structs from ASTERIX XML category definitions
+- **Data Block Framing**: Per-category `DataBlock` type with automatic CAT/LEN header handling
 - **Bit-level I/O**: Efficient bit-level reading and writing for binary protocols
 - **Type Safety**: Generated code includes enums, optional fields (EPB), and compile-time validation
 - **Zero Runtime Dependencies**: Generated code only depends on `rusterix-core`
@@ -72,7 +73,7 @@ use rusterix::{BitReader, BitWriter, Decode, Encode, DecodeError};
 use std::io::Cursor;
 
 mod generated;
-use generated::cat048::{Record, Item010, Item140};
+use generated::cat048::{Record, Item010, Item140, DataBlock};
 
 fn main() -> Result<(), DecodeError> {
     // Create a record
@@ -81,15 +82,34 @@ fn main() -> Result<(), DecodeError> {
         item140: Some(Item140 { time_of_day: 0x123456 }),
     };
 
-    // Encode to bytes
+    // Encode a single record
     let mut buffer = Vec::new();
-    record.encode(&mut buffer)?;
+    {
+        let mut writer = BitWriter::new(&mut buffer);
+        record.encode(&mut writer)?;
+        writer.flush()?;
+    }
 
-    // Decode from bytes
-    let mut reader = Cursor::new(&buffer);
+    // Decode a single record
+    let mut reader = BitReader::new(Cursor::new(&buffer));
     let decoded = Record::decode(&mut reader)?;
-
     assert_eq!(record, decoded);
+
+    // Use DataBlock to frame records with CAT + LEN header
+    let block = DataBlock::with_records(vec![record]);
+
+    let mut block_buf = Vec::new();
+    {
+        let mut writer = BitWriter::new(&mut block_buf);
+        block.encode(&mut writer)?;
+        writer.flush()?;
+    }
+    // block_buf = [CAT: 48][LEN: 2 bytes][record bytes...]
+
+    let mut reader = BitReader::new(Cursor::new(&block_buf));
+    let decoded_block = DataBlock::decode(&mut reader)?;
+    assert_eq!(block, decoded_block);
+
     Ok(())
 }
 ```
@@ -178,6 +198,14 @@ rusterix/
 | `Decode` | Trait for decodable types |
 | `Encode` | Trait for encodable types |
 
+### Generated Types (per category)
+
+| Type | Description |
+|------|-------------|
+| `Record` | Category record with optional items controlled by FSPEC |
+| `DataBlock` | Container of records with `[CAT: 1B][LEN: 2B][records...]` framing |
+| `Item{N}` | Individual data items (e.g. `Item010`, `Item020`) |
+
 ## XML Schema
 
 Rusterix uses XML files to define ASTERIX categories. See [XML_SCHEMA.md](XML_SCHEMA.md) for complete documentation.
@@ -196,7 +224,7 @@ Rusterix uses XML files to define ASTERIX categories. See [XML_SCHEMA.md](XML_SC
 
 | XML Element | Description | Generated Rust Type |
 |-------------|-------------|---------------------|
-| `<field>` | Named data field | `u8`, `u16`, `u32`, `u64` |
+| `<field>` | Named data field | `u8`, `u16`, `u32`, `u64`, `String` |
 | `<enum>` | Enumerated values | `enum Name { Variant, Unknown(uN) }` |
 | `<epb>` | Element Populated Bit | `Option<T>` |
 | `<spare>` | Reserved bits | Not included in struct |
@@ -234,6 +262,23 @@ pub struct Record {
     pub item020: Option<Item020>,
 }
 
+impl Encode for Record { /* ... */ }
+impl Decode for Record { /* ... */ }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct DataBlock {
+    pub records: Vec<Record>,
+}
+
+impl DataBlock {
+    pub const CATEGORY: u8 = 48;
+    pub fn new() -> Self { /* ... */ }
+    pub fn with_records(records: Vec<Record>) -> Self { /* ... */ }
+}
+
+impl Encode for DataBlock { /* ... */ }
+impl Decode for DataBlock { /* ... */ }
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Item010 {
     pub sac: u8,
@@ -267,11 +312,11 @@ cargo test --workspace
 
 The test suite includes:
 
-- **Unit tests** (52 in rusterix-core): BitReader, BitWriter, Fspec, Buffer
+- **Unit tests** (59 in rusterix-core): BitReader, BitWriter, Fspec, Buffer
 - **Parser tests** (20): XML parsing validation
 - **Transform tests** (18): IR transformation and validation
-- **Codegen tests** (28): Code generation correctness
-- **Roundtrip tests** (20): Verify `decode(encode(value)) == value` using real generated code
+- **Codegen tests** (22 integration + 27 unit): Code generation correctness
+- **Roundtrip tests** (31): Verify `decode(encode(value)) == value` using real generated code
 - **Builder tests** (14): High-level API tests
 
 ## Contributing
