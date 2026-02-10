@@ -2,7 +2,7 @@
 name = "rasterix-codegen"
 version = "0.1.0"
 edition = "2024"
-description = "Rusterix code generation library for ASTERIX message encoding and decoding"
+description = "Rasterix code generation library for ASTERIX message encoding and decoding"
 license = "MIT"
 repository = "https://github.com/davidegalletti99/rasterix"
 homepage = "https://github.com/davidegalletti99/rasterix"
