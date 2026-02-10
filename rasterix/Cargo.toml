@@ -1,0 +1,19 @@
+[package]
+name = "rasterix"
+version = "0.1.0"
+edition = "2024"
+description = "ASTERIX message encoding/decoding library"
+license = "MIT"
+repository = "https://github.com/davidegalletti99/rasterix"
+homepage = "https://github.com/davidegalletti99/rasterix"
+readme = "README.md"
+
+[dependencies]
+rasterix-core = { path = "../rasterix-core" }
+rasterix-codegen = { path = "../rasterix-codegen" }
+
+[build-dependencies]
+rasterix-codegen = { path = "../rasterix-codegen" }
+
+[dev-dependencies]
+test-utils = { path = "../test-utils" }

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE category SYSTEM "../../rasterix.dtd">
+<!--
+  Comprehensive Test XML
+  
+  This file tests all supported features:
+  - Fixed items
+  - Explicit items
+  - Extended items with multiple parts
+  - Repetitive items
+  - Compound items
+  - EPB (Extended Primary Bit) fields
+  - Enumerations
+  - Spare bits
+-->
+<category id="255">
+    
+    <!-- Test 1: Simple Fixed Item -->
+    <item id="010" frn="0">
+        <fixed bytes="2">
+            <field name="sac" bits="8"/>
+            <field name="sic" bits="8"/>
+        </fixed>
+    </item>
+    
+    <!-- Test 2: Fixed with Enum -->
+    <item id="020" frn="1">
+        <fixed bytes="1">
+            <enum name="message_type" bits="3">
+                <value name="NORTH_MARKER" value="0"/>
+                <value name="SECTOR_CROSSING" value="1"/>
+                <value name="GEOGRAPHICAL_FILTER" value="2"/>
+                <value name="JAMMING_STROBE" value="3"/>
+            </enum>
+            <spare bits="5"/>
+        </fixed>
+    </item>
+    
+    <!-- Test 3: Fixed with EPB -->
+    <item id="030" frn="2">
+        <fixed bytes="2">
+            <epb>
+                <field name="warning_level" bits="3"/>
+            </epb>
+            <epb>
+                <enum name="status" bits="2">
+                    <value name="OK" value="0"/>
+                    <value name="WARNING" value="1"/>
+                    <value name="ERROR" value="2"/>
+                </enum>
+            </epb>
+            <spare bits="3"/>
+            <field name="flags" bits="6"/>
+        </fixed>
+    </item>
+    
+    <!-- Test 4: Extended Item (Single Part) -->
+    <item id="040" frn="3">
+        <extended bytes="1">
+            <part index="0">
+                <field name="bit1" bits="1"/>
+                <field name="bit2" bits="1"/>
+                <field name="bit3" bits="1"/>
+                <field name="bit4" bits="1"/>
+                <field name="bit5" bits="1"/>
+                <field name="bit6" bits="1"/>
+                <field name="bit7" bits="1"/>
+            </part>
+        </extended>
+    </item>
+    
+    <!-- Test 5: Extended Item (Multiple Parts) -->
+    <item id="050" frn="4">
+        <extended bytes="3">
+            <part index="0">
+                <field name="a" bits="2"/>
+                <field name="b" bits="3"/>
+                <spare bits="2"/>
+            </part>
+            <part index="1">
+                <enum name="mode" bits="2">
+                    <value name="AUTO" value="0"/>
+                    <value name="MANUAL" value="1"/>
+                </enum>
+                <field name="c" bits="5"/>
+            </part>
+            <part index="2">
+                <epb>
+                    <field name="optional_data" bits="6"/>
+                </epb>
+            </part>
+        </extended>
+    </item>
+    
+    <!-- Test 6: Explicit Item -->
+    <item id="060" frn="5">
+        <explicit bytes="4">
+            <field name="altitude" bits="16"/>
+            <field name="speed" bits="16"/>
+        </explicit>
+    </item>
+    
+    <!-- Test 7: Repetitive Item -->
+    <item id="070" frn="6">
+        <repetitive bytes="3" counter="5">
+            <field name="azimuth" bits="16"/>
+            <field name="range" bits="8"/>
+        </repetitive>
+    </item>
+    
+    <!-- Test 8: Repetitive with EPB and Enum -->
+    <item id="080" frn="7">
+        <repetitive bytes="2" counter="3">
+            <epb>
+                <enum name="track_status" bits="2">
+                    <value name="CONFIRMED" value="0"/>
+                    <value name="TENTATIVE" value="1"/>
+                    <value name="COAST" value="2"/>
+                </enum>
+            </epb>
+            <field name="track_number" bits="12"/>
+            <spare bits="1"/>
+        </repetitive>
+    </item>
+    
+    <!-- Test 9: Simple Compound -->
+    <item id="090" frn="8">
+        <compound>
+            <fixed bytes="1">
+                <field name="primary" bits="8"/>
+            </fixed>
+            <fixed bytes="2">
+                <field name="secondary" bits="16"/>
+            </fixed>
+        </compound>
+    </item>
+    
+    <!-- Test 10: Complex Compound -->
+    <item id="100" frn="9">
+        <compound>
+            <!-- Sub-item 0: Fixed -->
+            <fixed bytes="1">
+                <field name="flags" bits="8"/>
+            </fixed>
+            
+            <!-- Sub-item 1: Explicit -->
+            <explicit bytes="2">
+                <field name="data1" bits="16"/>
+            </explicit>
+            
+            <!-- Sub-item 2: Extended -->
+            <extended bytes="2">
+                <part index="0">
+                    <field name="ext_a" bits="4"/>
+                    <field name="ext_b" bits="3"/>
+                </part>
+                <part index="1">
+                    <field name="ext_c" bits="7"/>
+                </part>
+            </extended>
+            
+            <!-- Sub-item 3: Repetitive -->
+            <repetitive bytes="1" counter="2">
+                <field name="rep_data" bits="8"/>
+            </repetitive>
+        </compound>
+    </item>
+    
+    <!-- Test 11: All Spare Bits -->
+    <item id="110" frn="10">
+        <fixed bytes="2">
+            <spare bits="16"/>
+        </fixed>
+    </item>
+    
+    <!-- Test 12: Mixed Everything -->
+    <item id="120" frn="11">
+        <fixed bytes="4">
+            <field name="field1" bits="4"/>
+            <epb>
+                <enum name="quality" bits="3">
+                    <value name="HIGH" value="0"/>
+                    <value name="MEDIUM" value="1"/>
+                    <value name="LOW" value="2"/>
+                </enum>
+            </epb>
+            <spare bits="3"/>
+            <enum name="type_code" bits="2">
+                <value name="TYPE_A" value="0"/>
+                <value name="TYPE_B" value="1"/>
+                <value name="TYPE_C" value="2"/>
+            </enum>
+            <field name="field2" bits="12"/>
+            <epb>
+                <field name="optional_field" bits="6"/>
+            </epb>
+        </fixed>
+    </item>
+    
+</category>

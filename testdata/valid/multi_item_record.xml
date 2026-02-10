@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE category SYSTEM "../../rusterix.dtd">
+<!DOCTYPE category SYSTEM "../../rasterix.dtd">
 <category id="48">
     <item id="10" frn="0">
         <fixed bytes="2">
@@ -10,6 +10,11 @@
     <item id="20" frn="1">
         <fixed bytes="1">
             <field name="typ" bits="8"/>
+        </fixed>
+    </item>
+    <item id="240" frn="3">
+        <fixed bytes="6">
+            <field name="aircraft_id" bits="48" type="string"/>
         </fixed>
     </item>
 </category>

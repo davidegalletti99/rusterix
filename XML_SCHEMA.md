@@ -1,16 +1,16 @@
-# Rusterix XML Schema Documentation
+# Rasterix XML Schema Documentation
 
-This document describes the XML format used to define ASTERIX category specifications for the Rusterix code generator.
+This document describes the XML format used to define ASTERIX category specifications for the Rasterix code generator.
 
 ## Overview
 
-Rusterix uses XML files to describe ASTERIX (All-purpose STructured Eurocontrol suRveillance Information eXchange) category definitions. These XML files are validated against the [rusterix.dtd](rusterix.dtd) Document Type Definition.
+Rasterix uses XML files to describe ASTERIX (All-purpose STructured Eurocontrol suRveillance Information eXchange) category definitions. These XML files are validated against the [rasterix.dtd](rasterix.dtd) Document Type Definition.
 
 ## Document Structure
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE category SYSTEM "rusterix.dtd">
+<!DOCTYPE category SYSTEM "rasterix.dtd">
 <category id="048">
     <item id="010" frn="1">
         <!-- Data structure definition -->
@@ -325,7 +325,7 @@ Here's a minimal but complete category definition showcasing various features:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE category SYSTEM "rusterix.dtd">
+<!DOCTYPE category SYSTEM "rasterix.dtd">
 <!--
   Example ASTERIX Category Definition
   Demonstrates all supported data structures and field types.
@@ -439,5 +439,5 @@ Each XML element maps to a specific Rust type:
 ## See Also
 
 - [README.md](README.md) - Main project documentation
-- [rusterix.dtd](rusterix.dtd) - The Document Type Definition
+- [rasterix.dtd](rasterix.dtd) - The Document Type Definition
 - [EUROCONTROL ASTERIX](https://www.eurocontrol.int/asterix) - Official ASTERIX specifications

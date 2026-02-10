@@ -1,13 +1,17 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
-    "rusterix-core",
-    "rusterix-codegen",
-    "rusterix",
+    "rasterix-core",
+    "rasterix-codegen",
+    "rasterix",
     "test-utils",
 ]
 
 [workspace.package]
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 license = "MIT"
+description = "Library that use code generation to create efficient Rust code for encoding and decoding ASTERIX messages based on XML specifications."
+repository = "https://github.com/davidegalletti99/rasterix"
+homepage = "https://github.com/davidegalletti99/rasterix"
+readme = "README.md"

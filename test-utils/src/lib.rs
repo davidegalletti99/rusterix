@@ -1,4 +1,4 @@
-//! Shared test utilities for the rusterix workspace.
+//! Shared test utilities for the rasterix workspace.
 //!
 //! This crate provides common helpers for loading fixtures, comparing generated code,
 //! and other test utilities shared across multiple crates.

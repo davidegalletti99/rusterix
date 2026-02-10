@@ -1,8 +1,8 @@
 [package]
 name = "test-utils"
 version = "0.1.0"
-edition = "2021"
-description = "Shared test utilities for rusterix workspace"
+edition = "2024"
+description = "Shared test utilities for rasterix workspace"
 publish = false
 
 [dependencies]

@@ -1,0 +1,19 @@
+[package]
+name = "rasterix-codegen"
+version = "0.1.0"
+edition = "2024"
+description = "Rusterix code generation library for ASTERIX message encoding and decoding"
+license = "MIT"
+repository = "https://github.com/davidegalletti99/rasterix"
+homepage = "https://github.com/davidegalletti99/rasterix"
+readme = "README.md"
+
+[dependencies]
+syn = "2.0.114"
+serde = { version = "1.0", features = ["derive"] }
+quick-xml = { version = "0.31", features = ["serialize"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+
+[dev-dependencies]
+test-utils = { path = "../test-utils" }
