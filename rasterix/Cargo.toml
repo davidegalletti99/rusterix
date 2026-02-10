@@ -9,11 +9,11 @@ homepage = "https://github.com/davidegalletti99/rasterix"
 readme = "README.md"
 
 [dependencies]
-rasterix-core = { path = "../rasterix-core" }
-rasterix-codegen = { path = "../rasterix-codegen" }
+rasterix-core = { path = "../rasterix-core", version = "0.1.0" }
+rasterix-codegen = { path = "../rasterix-codegen", version = "0.1.0" }
 
 [build-dependencies]
-rasterix-codegen = { path = "../rasterix-codegen" }
+rasterix-codegen = { path = "../rasterix-codegen", version = "0.1.0" }
 
 [dev-dependencies]
 test-utils = { path = "../test-utils" }
