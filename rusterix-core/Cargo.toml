@@ -3,6 +3,10 @@ name = "rusterix-core"
 version = "0.1.0"
 edition = "2024"
 description = "Core runtime library for ASTERIX message encoding and decoding"
+license = "MIT"
+repository = "https://github.com/davidegalletti99/rusterix"
+homepage = "https://github.com/davidegalletti99/rusterix"
+readme = "README.md"
 
 [dependencies]
 
