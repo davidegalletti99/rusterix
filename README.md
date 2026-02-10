@@ -1,6 +1,6 @@
-# Rusterix
+# Rasterix
 
-**Rusterix** is a Rust library for encoding and decoding [ASTERIX](https://www.eurocontrol.int/asterix) (All Purpose Structured Eurocontrol Surveillance Information Exchange) messages.
+**Rasterix** is a Rust library for encoding and decoding [ASTERIX](https://www.eurocontrol.int/asterix) (All Purpose Structured Eurocontrol Surveillance Information Exchange) messages.
 
 ASTERIX is the standard data format used in air traffic control systems for exchanging surveillance data (radar, ADS-B, MLAT, etc.).
 
@@ -10,7 +10,7 @@ ASTERIX is the standard data format used in air traffic control systems for exch
 - **Data Block Framing**: Per-category `DataBlock` type with automatic CAT/LEN header handling
 - **Bit-level I/O**: Efficient bit-level reading and writing for binary protocols
 - **Type Safety**: Generated code includes enums, optional fields (EPB), and compile-time validation
-- **Zero Runtime Dependencies**: Generated code only depends on `rusterix-core`
+- **Zero Runtime Dependencies**: Generated code only depends on `rasterix-core`
 - **Roundtrip Tested**: Comprehensive tests ensure encode/decode correctness
 
 ## Installation
@@ -19,10 +19,10 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rusterix = "0.1"
+rasterix = "0.1"
 
 [build-dependencies]
-rusterix = "0.1"  # If generating code at build time
+rasterix = "0.1"  # If generating code at build time
 ```
 
 ## Quick Start
@@ -31,7 +31,7 @@ rusterix = "0.1"  # If generating code at build time
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE category SYSTEM "rusterix.dtd">
+<!DOCTYPE category SYSTEM "rasterix.dtd">
 <category id="048">
     <item id="010" frn="1">
         <fixed bytes="2">
@@ -50,7 +50,7 @@ rusterix = "0.1"  # If generating code at build time
 ### 2. Generate code using the Builder API
 
 ```rust
-use rusterix::codegen::builder::{Builder, RustBuilder};
+use rasterix::codegen::builder::{Builder, RustBuilder};
 
 fn main() -> std::io::Result<()> {
     let builder = RustBuilder::new();
@@ -69,7 +69,7 @@ fn main() -> std::io::Result<()> {
 ### 3. Use the generated code
 
 ```rust
-use rusterix::{BitReader, BitWriter, Decode, Encode, DecodeError};
+use rasterix::{BitReader, BitWriter, Decode, Encode, DecodeError};
 use std::io::Cursor;
 
 mod generated;
@@ -119,7 +119,7 @@ fn main() -> Result<(), DecodeError> {
 For automatic code generation at build time, add a `build.rs`:
 
 ```rust
-use rusterix::codegen::builder::{Builder, RustBuilder};
+use rasterix::codegen::builder::{Builder, RustBuilder};
 use std::env;
 use std::path::Path;
 
@@ -145,18 +145,18 @@ include!(concat!(env!("OUT_DIR"), "/cat048.rs"));
 ## Project Structure
 
 ```
-rusterix/
+rasterix/
 ├── Cargo.toml              # Workspace manifest
 ├── README.md               # This file
 ├── XML_SCHEMA.md           # XML schema documentation
-├── rusterix.dtd            # Document Type Definition
+├── rasterix.dtd            # Document Type Definition
 │
-├── rusterix/               # Main library crate (re-exports)
+├── rasterix/               # Main library crate (re-exports)
 │   ├── src/lib.rs          # Re-exports rcore and codegen
 │   ├── build.rs            # Build-time code generation for tests
 │   └── tests/              # Integration & roundtrip tests
 │
-├── rusterix-core/          # Runtime core library
+├── rasterix-core/          # Runtime core library
 │   └── src/
 │       ├── bit_reader.rs   # Bit-level reading
 │       ├── bit_writer.rs   # Bit-level writing
@@ -164,7 +164,7 @@ rusterix/
 │       ├── error.rs        # Error types
 │       └── buffer.rs       # Memory buffer utilities
 │
-├── rusterix-codegen/       # Code generation library
+├── rasterix-codegen/       # Code generation library
 │   └── src/
 │       ├── builder.rs      # High-level Builder API
 │       ├── parse/          # XML parsing
@@ -183,11 +183,11 @@ rusterix/
 
 | Crate | Description |
 |-------|-------------|
-| [`rusterix`](rusterix/) | Main library - re-exports `rcore` and `codegen` modules |
-| [`rusterix-core`](rusterix-core/) | Runtime types used by generated code |
-| [`rusterix-codegen`](rusterix-codegen/) | XML parsing and Rust code generation |
+| [`rasterix`](rasterix/) | Main library - re-exports `rcore` and `codegen` modules |
+| [`rasterix-core`](rasterix-core/) | Runtime types used by generated code |
+| [`rasterix-codegen`](rasterix-codegen/) | XML parsing and Rust code generation |
 
-### Runtime Types (`rusterix::rcore`)
+### Runtime Types (`rasterix::rcore`)
 
 | Type | Description |
 |------|-------------|
@@ -208,7 +208,7 @@ rusterix/
 
 ## XML Schema
 
-Rusterix uses XML files to define ASTERIX categories. See [XML_SCHEMA.md](XML_SCHEMA.md) for complete documentation.
+Rasterix uses XML files to define ASTERIX categories. See [XML_SCHEMA.md](XML_SCHEMA.md) for complete documentation.
 
 ### Supported Data Structures
 
@@ -253,7 +253,7 @@ From this XML:
 </category>
 ```
 
-Rusterix generates:
+Rasterix generates:
 
 ```rust
 #[derive(Debug, Clone, PartialEq)]
@@ -312,7 +312,7 @@ cargo test --workspace
 
 The test suite includes:
 
-- **Unit tests** (59 in rusterix-core): BitReader, BitWriter, Fspec, Buffer
+- **Unit tests** (59 in rasterix-core): BitReader, BitWriter, Fspec, Buffer
 - **Parser tests** (20): XML parsing validation
 - **Transform tests** (18): IR transformation and validation
 - **Codegen tests** (22 integration + 27 unit): Code generation correctness
