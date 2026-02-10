@@ -65,8 +65,8 @@ fn parse_extended_item() {
 
     match &category.items[0].data {
         ItemStructure::Extended(ext) => {
-            assert_eq!(ext.bytes, 2);
-            assert_eq!(ext.part_groups.len(), 2);
+            assert_eq!(ext.bytes, 3);
+            assert_eq!(ext.part_groups.len(), 3);
         }
         _ => panic!("Expected Extended item"),
     }

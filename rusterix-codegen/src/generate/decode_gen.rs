@@ -1,5 +1,5 @@
 use proc_macro2::{Ident, TokenStream};
-use quote::quote;
+use quote::{quote};
 
 use crate::transform::lower_ir::{DecodeOp, FieldDescriptor, LoweredPart, LoweredSubItem, LoweredSubItemKind};
 
@@ -111,6 +111,7 @@ pub fn generate_extended_decode(
     let mut main_decode_body = Vec::new();
     let mut field_names = Vec::new();
 
+    let number_of_parts = parts.len();
     for (i, part) in parts.iter().enumerate() {
         let part_name = &part.struct_name;
         let field_name = &part.field_name;
@@ -133,18 +134,42 @@ pub fn generate_extended_decode(
         if i == 0 {
             main_decode_body.push(quote! {
                 let #field_name = #part_name::decode(reader)?;
-                let mut fx = reader.read_bits(1)? != 0;
             });
-        } else {
-            main_decode_body.push(quote! {
-                let #field_name = if fx {
-                    let part = #part_name::decode(reader)?;
-                    fx = reader.read_bits(1)? != 0;
-                    Some(part)
+
+            if i != number_of_parts - 1 {
+                if number_of_parts <= 2 {
+                    // no need for mutable fx if there are only 2 parts
+                    main_decode_body.push(quote! {
+                        let fx = reader.read_bits(1)? != 0;
+                    });
                 } else {
-                    None
-                };
-            });
+                    // For more than 2 parts, we need to keep track of fx for 
+                    // subsequent parts
+                    main_decode_body.push(quote! {
+                        let mut fx = reader.read_bits(1)? != 0;
+                    });
+                }
+            }
+        } else {
+            if i != number_of_parts - 1 {
+                main_decode_body.push(quote! {
+                    let #field_name = if fx {
+                        let part = #part_name::decode(reader)?;
+                        fx = reader.read_bits(1)? != 0;
+                        Some(part)
+                    } else {
+                        None
+                    };
+                });
+            } else {
+                main_decode_body.push(quote! {
+                    let #field_name = if fx {
+                        Some(#part_name::decode(reader)?)
+                    } else {
+                        None
+                    };
+                });
+            }
         }
     }
 

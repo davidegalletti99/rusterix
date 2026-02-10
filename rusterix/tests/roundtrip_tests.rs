@@ -354,6 +354,7 @@ fn roundtrip_extended_single_part() {
     let original = Item020 {
         part0: Item020Part0 { a: 5, b: 10 },
         part1: None,
+        part2: None,
     };
 
     let mut buffer = Vec::new();
@@ -379,6 +380,7 @@ fn roundtrip_extended_two_parts() {
     let original = Item020 {
         part0: Item020Part0 { a: 5, b: 10 },
         part1: Some(Item020Part1 { c: 20 }),
+        part2: Some(Item020Part2 { d: 30 }),
     };
 
     let mut buffer = Vec::new();

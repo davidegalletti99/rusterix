@@ -66,12 +66,13 @@ fn transform_extended_layout() {
 
     match &ir.category.items[0].layout {
         IRLayout::Extended { bytes, part_groups } => {
-            assert_eq!(*bytes, 2);
-            assert_eq!(part_groups.len(), 2);
+            assert_eq!(*bytes, 3);
+            assert_eq!(part_groups.len(), 3);
 
             // Check part group indices
             assert_eq!(part_groups[0].index, 0);
             assert_eq!(part_groups[1].index, 1);
+            assert_eq!(part_groups[2].index, 2);
         }
         _ => panic!("Expected Extended layout"),
     }
